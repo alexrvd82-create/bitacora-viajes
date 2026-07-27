@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
 import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
-  MODE_LABELS, BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm,
+  MODE_LABELS, BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
 } from "./data.js";
 
 const MODES = [
@@ -26,6 +26,9 @@ export default function TravelLog({ session }) {
   const [roundTrip, setRoundTrip] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recalcId, setRecalcId] = useState(null);
+  const [suggestions, setSuggestions] = useState({}); // { [stopIndex]: [{name, admin1, country, country_code, lat, lon}] }
+  const [openSuggestIndex, setOpenSuggestIndex] = useState(null);
+  const debounceRef = useRef({});
 
   useEffect(() => { loadTrips(); }, []);
 
@@ -54,13 +57,33 @@ export default function TravelLog({ session }) {
     setStops(prev => (prev.length > 2 ? prev.filter((_, i) => i !== index) : prev));
   }
   function updateStop(index, field, value) {
-    setStops(prev => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
+    setStops(prev => prev.map((s, i) => (i === index ? { ...s, [field]: value, ...(field === "city" ? { lat: undefined, lon: undefined } : {}) } : s)));
+    if (field === "city") {
+      clearTimeout(debounceRef.current[index]);
+      debounceRef.current[index] = setTimeout(async () => {
+        const results = await searchCities(value);
+        setSuggestions(prev => ({ ...prev, [index]: results }));
+        setOpenSuggestIndex(results.length > 0 ? index : null);
+      }, 350);
+    }
+  }
+
+  function selectSuggestion(index, sug) {
+    const countryMatch = COUNTRIES.find(c => c.iso === sug.country_code);
+    setStops(prev => prev.map((s, i) => (i === index
+      ? { ...s, city: sug.name, country: countryMatch ? countryMatch.name : s.country, lat: sug.lat, lon: sug.lon }
+      : s)));
+    setOpenSuggestIndex(null);
+    setSuggestions(prev => ({ ...prev, [index]: [] }));
   }
 
   async function addTrip() {
     if (stops.some(s => !s.city.trim())) return;
     setSaving(true);
-    const cleanStops = stops.map(s => ({ country: s.country, city: s.city.trim() }));
+    const cleanStops = stops.map(s => ({
+      country: s.country, city: s.city.trim(),
+      ...(s.lat != null && s.lon != null ? { lat: s.lat, lon: s.lon } : {}),
+    }));
     const resolvedStops = await Promise.all(cleanStops.map(resolveStopCoords));
     const km = await computeTripKm(mode, resolvedStops);
     const payload = {
@@ -73,7 +96,7 @@ export default function TravelLog({ session }) {
     };
     const { data, error } = await supabase.from("trips").insert(payload).select().single();
     if (!error && data) setTrips(prev => [data, ...prev]);
-    setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "" }))));
+    setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "", lat: undefined, lon: undefined }))));
     setDate("");
     setSaving(false);
   }
@@ -159,11 +182,24 @@ export default function TravelLog({ session }) {
                         {COUNTRIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                       </select>
                     </div>
-                    <div>
+                    <div style={{ position: "relative" }}>
                       <label style={{ fontSize: 10, color: "transparent" }}>ciudad</label>
                       <input value={s.city} onChange={e => updateStop(i, "city", e.target.value)}
+                        onFocus={() => { if (suggestions[i]?.length) setOpenSuggestIndex(i); }}
+                        onBlur={() => setTimeout(() => setOpenSuggestIndex(null), 150)}
                         placeholder={isFirst ? "Ciudad de salida" : isLast ? "Ciudad de llegada" : "Ciudad de la parada"}
-                        style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 6, padding: 8 }} />
+                        style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${s.lat != null ? teal : inkLine}`, color: paper, borderRadius: 6, padding: 8 }} />
+                      {openSuggestIndex === i && suggestions[i]?.length > 0 && (
+                        <div style={{ position: "absolute", zIndex: 10, top: "100%", left: 0, right: 0, marginTop: 2, background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 6, maxHeight: 220, overflowY: "auto" }}>
+                          {suggestions[i].map((sug, si) => (
+                            <button key={si} type="button" onMouseDown={() => selectSuggestion(i, sug)}
+                              style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 10px", background: "none", border: "none", color: paper, cursor: "pointer", fontSize: 13, borderBottom: si < suggestions[i].length - 1 ? `1px solid ${inkLine}` : "none" }}>
+                              {sug.name}
+                              <span style={{ color: textDim, fontSize: 11 }}>{sug.admin1 ? `, ${sug.admin1}` : ""}, {sug.country}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {!isFirst && !isLast && (
@@ -379,12 +415,10 @@ export default function TravelLog({ session }) {
                       </div>
                       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
                         {t.trip_date || "sin fecha"}{km != null ? ` · ${km.toLocaleString("es-ES")} km` : ""}
-                        {t.km == null && (
-                          <button onClick={() => recalcTrip(t)} disabled={recalcId === t.id}
-                            style={{ marginLeft: 8, background: "none", border: "none", color: brass, cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", textDecoration: "underline", padding: 0 }}>
-                            {recalcId === t.id ? "recalculando..." : "⟳ mejorar precisión"}
-                          </button>
-                        )}
+                        <button onClick={() => recalcTrip(t)} disabled={recalcId === t.id}
+                          style={{ marginLeft: 8, background: "none", border: "none", color: brass, cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", textDecoration: "underline", padding: 0 }}>
+                          {recalcId === t.id ? "recalculando..." : "⟳ recalcular"}
+                        </button>
                       </div>
                     </div>
                     <button onClick={() => removeTrip(t.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>

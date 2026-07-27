@@ -102,6 +102,30 @@ export function tripKm(t) {
 /* ---------- Geocodificación de ciudades y rutas reales ---------- */
 const geocodeCache = {};
 
+/* Sugerencias de ciudades mientras el usuario escribe (autocompletar) */
+export async function searchCities(query) {
+  if (!query || query.trim().length < 2) return [];
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=8&language=es&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.results) return [];
+    return data.results
+      .slice()
+      .sort((a, b) => (b.population || 0) - (a.population || 0))
+      .map(r => ({
+        name: r.name,
+        admin1: r.admin1 || "",
+        country_code: r.country_code,
+        country: r.country || "",
+        lat: r.latitude,
+        lon: r.longitude,
+      }));
+  } catch (e) {
+    return [];
+  }
+}
+
 export async function geocodeCity(city, countryIso2) {
   const cacheKey = `${city}|${countryIso2}`;
   if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
@@ -110,7 +134,12 @@ export async function geocodeCity(city, countryIso2) {
     const res = await fetch(url);
     const data = await res.json();
     if (!data.results || data.results.length === 0) return null;
-    const match = data.results.find(r => r.country_code === countryIso2) || data.results[0];
+    const inCountry = data.results.filter(r => r.country_code === countryIso2);
+    const candidates = inCountry.length > 0 ? inCountry : data.results;
+    // Si hay varios sitios con el mismo nombre, nos quedamos con el más poblado
+    // (evita que un pueblo pequeño con el mismo nombre descoloque el cálculo)
+    candidates.sort((a, b) => (b.population || 0) - (a.population || 0));
+    const match = candidates[0];
     const result = { lat: match.latitude, lon: match.longitude };
     geocodeCache[cacheKey] = result;
     return result;
@@ -135,6 +164,7 @@ export async function drivingKm(a, b) {
 
 /* Resuelve coordenadas reales de cada parada (geocodifica ciudad; si falla, usa la capital del país) */
 export async function resolveStopCoords(stop) {
+  if (stop.lat != null && stop.lon != null) return { ...stop, approx: false };
   const country = COUNTRY_MAP[stop.country];
   const geo = await geocodeCity(stop.city, country?.iso);
   return {
