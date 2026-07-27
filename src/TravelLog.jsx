@@ -4,7 +4,7 @@ import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, 
 import { supabase } from "./supabaseClient";
 import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
-  MODE_LABELS, BADGES, flagUrl, tripKm,
+  MODE_LABELS, BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm,
 } from "./data.js";
 
 const MODES = [
@@ -24,6 +24,8 @@ export default function TravelLog({ session }) {
   const [mode, setMode] = useState("avion");
   const [date, setDate] = useState("");
   const [roundTrip, setRoundTrip] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [recalcId, setRecalcId] = useState(null);
 
   useEffect(() => { loadTrips(); }, []);
 
@@ -57,17 +59,32 @@ export default function TravelLog({ session }) {
 
   async function addTrip() {
     if (stops.some(s => !s.city.trim())) return;
+    setSaving(true);
+    const cleanStops = stops.map(s => ({ country: s.country, city: s.city.trim() }));
+    const resolvedStops = await Promise.all(cleanStops.map(resolveStopCoords));
+    const km = await computeTripKm(mode, resolvedStops);
     const payload = {
       user_id: session.user.id,
       trip_date: date || null,
       mode,
       round_trip: roundTrip,
-      stops: stops.map(s => ({ country: s.country, city: s.city.trim() })),
+      stops: resolvedStops,
+      km,
     };
     const { data, error } = await supabase.from("trips").insert(payload).select().single();
     if (!error && data) setTrips(prev => [data, ...prev]);
     setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "" }))));
     setDate("");
+    setSaving(false);
+  }
+
+  async function recalcTrip(t) {
+    setRecalcId(t.id);
+    const resolvedStops = await Promise.all(t.stops.map(s => resolveStopCoords({ country: s.country, city: s.city })));
+    const km = await computeTripKm(t.mode, resolvedStops);
+    const { data, error } = await supabase.from("trips").update({ stops: resolvedStops, km }).eq("id", t.id).select().single();
+    if (!error && data) setTrips(prev => prev.map(x => (x.id === t.id ? data : x)));
+    setRecalcId(null);
   }
 
   async function removeTrip(id) {
@@ -182,8 +199,8 @@ export default function TravelLog({ session }) {
               style={{ marginLeft: "auto", background: ink, border: `1px solid ${inkLine}`, color: textDim, borderRadius: 6, padding: 8, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace" }} />
           </div>
 
-          <button onClick={addTrip} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 6, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-            Registrar viaje
+          <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 6, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            {saving ? "Calculando distancia real..." : "Registrar viaje"}
           </button>
         </div>
 
@@ -362,6 +379,12 @@ export default function TravelLog({ session }) {
                       </div>
                       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
                         {t.trip_date || "sin fecha"}{km != null ? ` · ${km.toLocaleString("es-ES")} km` : ""}
+                        {t.km == null && (
+                          <button onClick={() => recalcTrip(t)} disabled={recalcId === t.id}
+                            style={{ marginLeft: 8, background: "none", border: "none", color: brass, cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", textDecoration: "underline", padding: 0 }}>
+                            {recalcId === t.id ? "recalculando..." : "⟳ mejorar precisión"}
+                          </button>
+                        )}
                       </div>
                     </div>
                     <button onClick={() => removeTrip(t.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>

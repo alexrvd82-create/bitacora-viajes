@@ -87,6 +87,8 @@ export function haversineKm(a, b) {
 }
 
 export function tripKm(t) {
+  if (t.km != null) return Math.round(t.km * (t.round_trip ? 2 : 1));
+  // Aproximación antigua: capital a capital (viajes guardados antes de la geolocalización por ciudad)
   const stops = t.stops;
   let total = 0;
   for (let i = 0; i < stops.length - 1; i++) {
@@ -95,4 +97,66 @@ export function tripKm(t) {
     total += haversineKm(a, b);
   }
   return Math.round(total) * (t.round_trip ? 2 : 1);
+}
+
+/* ---------- Geocodificación de ciudades y rutas reales ---------- */
+const geocodeCache = {};
+
+export async function geocodeCity(city, countryIso2) {
+  const cacheKey = `${city}|${countryIso2}`;
+  if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=10&language=es&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) return null;
+    const match = data.results.find(r => r.country_code === countryIso2) || data.results[0];
+    const result = { lat: match.latitude, lon: match.longitude };
+    geocodeCache[cacheKey] = result;
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function drivingKm(a, b) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === "Ok" && data.routes && data.routes[0]) {
+      return Math.round(data.routes[0].distance / 1000);
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Resuelve coordenadas reales de cada parada (geocodifica ciudad; si falla, usa la capital del país) */
+export async function resolveStopCoords(stop) {
+  const country = COUNTRY_MAP[stop.country];
+  const geo = await geocodeCity(stop.city, country?.iso);
+  return {
+    ...stop,
+    lat: geo ? geo.lat : country?.lat,
+    lon: geo ? geo.lon : country?.lon,
+    approx: !geo,
+  };
+}
+
+/* Calcula el km real de un viaje: coche usa carretera real (OSRM), el resto usa línea recta entre ciudades */
+export async function computeTripKm(mode, resolvedStops) {
+  let total = 0;
+  for (let i = 0; i < resolvedStops.length - 1; i++) {
+    const a = resolvedStops[i], b = resolvedStops[i + 1];
+    if (a.lat == null || b.lat == null) return null;
+    if (mode === "coche") {
+      const road = await drivingKm(a, b);
+      total += road != null ? road : haversineKm(a, b);
+    } else {
+      total += haversineKm(a, b);
+    }
+  }
+  return Math.round(total);
 }
