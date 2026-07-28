@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import Plotly from "plotly.js-dist-min";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
 import { COUNTRY_MAP, tripKm, flagUrl } from "./data.js";
 
@@ -28,23 +27,17 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-/* Interpola puntos a lo largo del círculo máximo entre dos coordenadas, para dibujar un arco de ruta */
-function greatCirclePoints(lat1, lon1, lat2, lon2, n = 40) {
-  const toRad = d => (d * Math.PI) / 180, toDeg = r => (r * 180) / Math.PI;
-  const φ1 = toRad(lat1), λ1 = toRad(lon1), φ2 = toRad(lat2), λ2 = toRad(lon2);
-  const d = 2 * Math.asin(Math.sqrt(Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2));
-  if (d === 0) return [[lat1, lon1]];
-  const points = [];
-  for (let i = 0; i <= n; i++) {
-    const f = i / n;
-    const A = Math.sin((1 - f) * d) / Math.sin(d), B = Math.sin(f * d) / Math.sin(d);
-    const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2);
-    const y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2);
-    const z = A * Math.sin(φ1) + B * Math.sin(φ2);
-    const φ = Math.atan2(z, Math.sqrt(x * x + y * y)), λ = Math.atan2(y, x);
-    points.push([toDeg(φ), toDeg(λ)]);
-  }
-  return points;
+/* Construye la secuencia de paradas en orden cronológico, con el medio de transporte de cada tramo */
+function buildItinerary(sortedTrips) {
+  const items = [];
+  sortedTrips.forEach(t => {
+    t.stops.forEach((s, idx) => {
+      const prev = items[items.length - 1];
+      if (prev && prev.city === s.city && prev.country === s.country) return;
+      items.push({ city: s.city, country: s.country, mode: idx === 0 ? null : t.mode });
+    });
+  });
+  return items;
 }
 
 export default function ShareCard({ trips }) {
@@ -53,7 +46,6 @@ export default function ShareCard({ trips }) {
   const [imgUrl, setImgUrl] = useState(null);
   const [generating, setGenerating] = useState(false);
   const canvasRef = useRef(null);
-  const plotlyHostRef = useRef(null);
 
   const filtered = trips.filter(t => {
     if (!t.trip_date) return false;
@@ -62,48 +54,9 @@ export default function ShareCard({ trips }) {
     return true;
   });
 
-  async function renderRouteMap() {
-    const lineTraces = [];
-    const pointsLon = [], pointsLat = [], pointsText = [];
-    filtered.forEach(t => {
-      const stops = t.stops.filter(s => s.lat != null && s.lon != null);
-      for (let i = 0; i < stops.length - 1; i++) {
-        const pts = greatCirclePoints(stops[i].lat, stops[i].lon, stops[i + 1].lat, stops[i + 1].lon);
-        lineTraces.push({
-          type: "scattergeo", mode: "lines",
-          lat: pts.map(p => p[0]), lon: pts.map(p => p[1]),
-          line: { width: 2.5, color: "rgba(193,145,63,0.85)" },
-          hoverinfo: "skip", showlegend: false,
-        });
-      }
-      stops.forEach(s => { pointsLon.push(s.lon); pointsLat.push(s.lat); pointsText.push(s.city); });
-    });
-
-    const markerTrace = {
-      type: "scattergeo", mode: "markers",
-      lat: pointsLat, lon: pointsLon, text: pointsText, hoverinfo: "skip",
-      marker: { size: 7, color: "#efe6d2", line: { width: 1.5, color: "#101d33" } },
-      showlegend: false,
-    };
-
-    const host = plotlyHostRef.current;
-    await Plotly.newPlot(host, [...lineTraces, markerTrace], {
-      geo: {
-        projection: { type: "natural earth" },
-        showframe: false, showcoastlines: false, showcountries: false,
-        showocean: true, oceancolor: "#101d33", landcolor: "#22335a", bgcolor: "transparent",
-      },
-      paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-      margin: { t: 0, b: 0, l: 0, r: 0 }, width: 1000, height: 640,
-    }, { staticPlot: true, displayModeBar: false });
-
-    const dataUrl = await Plotly.toImage(host, { format: "png", width: 1000, height: 640 });
-    Plotly.purge(host);
-    return dataUrl;
-  }
-
   async function generate() {
     setGenerating(true);
+    const sortedTrips = [...filtered].sort((a, b) => (a.trip_date || "").localeCompare(b.trip_date || ""));
     const countrySet = new Set(), citySet = new Set();
     const kmByMode = { avion: 0, coche: 0, tren: 0, barco: 0 };
     filtered.forEach(t => {
@@ -113,7 +66,7 @@ export default function ShareCard({ trips }) {
     });
     const kmTotal = Object.values(kmByMode).reduce((a, b) => a + b, 0);
     const countries = [...countrySet];
-    const hasRoutePoints = filtered.some(t => t.stops.some(s => s.lat != null));
+    const itinerary = buildItinerary(sortedTrips);
 
     const W = 1080, H = 1920;
     const canvas = canvasRef.current;
@@ -140,28 +93,88 @@ export default function ShareCard({ trips }) {
     ctx.font = "800 58px Georgia, serif";
     const rangeText = start && end
       ? `${fmtDate(start)} — ${fmtDate(end)}`
-      : filtered.length ? `${fmtDate(filtered[filtered.length - 1].trip_date)} — ${fmtDate(filtered[0].trip_date)}` : "Mi viaje";
+      : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : "Mi viaje";
     wrapCenteredText(ctx, rangeText, W / 2, 175, W - 160, 66);
 
-    // Mapa de ruta
-    const mapY = 220, mapH = 620;
-    if (hasRoutePoints) {
-      const mapDataUrl = await renderRouteMap();
-      const mapImg = await loadImage(mapDataUrl);
-      if (mapImg) {
-        ctx.save();
-        roundRect(ctx, 40, mapY, W - 80, mapH, 20);
-        ctx.clip();
-        ctx.fillStyle = "#101d33";
-        ctx.fillRect(40, mapY, W - 80, mapH);
-        ctx.drawImage(mapImg, 40, mapY, W - 80, mapH);
-        ctx.restore();
-        ctx.strokeStyle = inkLine; ctx.lineWidth = 1.5;
-        roundRect(ctx, 40, mapY, W - 80, mapH, 20); ctx.stroke();
+    // Itinerario tipo "pasaporte de sellos"
+    const panelY = 220, panelH = 620;
+    ctx.fillStyle = "rgba(255,255,255,0.02)";
+    roundRect(ctx, 40, panelY, W - 80, panelH, 20); ctx.fill();
+    ctx.strokeStyle = inkLine; ctx.lineWidth = 1.5;
+    roundRect(ctx, 40, panelY, W - 80, panelH, 20); ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.font = "500 24px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = textDim;
+    ctx.fillText("RUTA DEL VIAJE", W / 2, panelY + 50);
+
+    const maxRows = 6;
+    const shown = itinerary.slice(0, maxRows);
+    const rowH = (panelH - 100) / Math.max(shown.length, 1);
+    const circleX = 130, circleR = 34, textX = 200;
+    const startY = panelY + 100;
+
+    const flagImgs = await Promise.all(shown.map(item => {
+      const c = COUNTRY_MAP[item.country];
+      return c ? loadImage(flagUrl(c.iso)) : Promise.resolve(null);
+    }));
+
+    shown.forEach((item, i) => {
+      const cy = startY + i * rowH + rowH / 2 - 20;
+      // línea de conexión al siguiente
+      if (i < shown.length - 1) {
+        ctx.strokeStyle = "rgba(193,145,63,0.5)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([2, 10]);
+        ctx.beginPath();
+        ctx.moveTo(circleX, cy + circleR);
+        ctx.lineTo(circleX, cy + rowH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (item.mode == null && shown[i + 1].mode) {
+          // el modo pertenece al tramo siguiente, se dibuja igual con el icono del siguiente item
+        }
+        const nextMode = shown[i + 1].mode;
+        if (nextMode) {
+          const midY = cy + (rowH + circleR) / 2 + 10;
+          ctx.fillStyle = ink;
+          ctx.beginPath(); ctx.arc(circleX, midY, 22, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = inkLine; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(circleX, midY, 22, 0, Math.PI * 2); ctx.stroke();
+          ctx.font = "24px sans-serif";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillStyle = paper;
+          ctx.fillText(MODE_ICONS[nextMode], circleX, midY + 2);
+          ctx.textBaseline = "alphabetic";
+        }
       }
+      // círculo con bandera
+      ctx.save();
+      ctx.beginPath(); ctx.arc(circleX, cy, circleR, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      if (flagImgs[i]) ctx.drawImage(flagImgs[i], circleX - circleR, cy - circleR, circleR * 2, circleR * 2);
+      else { ctx.fillStyle = inkLine; ctx.fillRect(circleX - circleR, cy - circleR, circleR * 2, circleR * 2); }
+      ctx.restore();
+      ctx.strokeStyle = brass; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(circleX, cy, circleR, 0, Math.PI * 2); ctx.stroke();
+
+      // texto
+      ctx.textAlign = "left";
+      ctx.font = "700 34px Georgia, serif";
+      ctx.fillStyle = paper;
+      ctx.fillText(item.city, textX, cy - 2);
+      ctx.font = "400 22px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = textDim;
+      ctx.fillText(item.country, textX, cy + 28);
+    });
+
+    if (itinerary.length > maxRows) {
+      ctx.textAlign = "center";
+      ctx.font = "600 24px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = brass;
+      ctx.fillText(`+ ${itinerary.length - maxRows} paradas más`, W / 2, panelY + panelH - 20);
     }
 
-    let y = mapY + mapH + 100;
+    let y = panelY + panelH + 100;
 
     // KM total
     ctx.fillStyle = brass;
@@ -213,37 +226,7 @@ export default function ShareCard({ trips }) {
       ctx.fillStyle = textDim;
       ctx.fillText(s.label, x, y + 32);
     });
-    y += 80;
-
-    ctx.strokeStyle = inkLine; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(140, y); ctx.lineTo(W - 140, y); ctx.stroke();
-    y += 60;
-
-    // Banderas
-    ctx.font = "500 24px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = textDim;
-    ctx.textAlign = "center";
-    ctx.fillText("PAÍSES VISITADOS", W / 2, y);
-    y += 40;
-
-    const flagW = 90, flagH = 62, gap = 18;
-    const maxFlags = Math.min(countries.length, 6);
-    const totalFlagsW = maxFlags * flagW + (maxFlags - 1) * gap;
-    let fx = (W - totalFlagsW) / 2;
-    const imgs = await Promise.all(countries.slice(0, 6).map(name => {
-      const c = COUNTRY_MAP[name];
-      return c ? loadImage(flagUrl(c.iso)) : Promise.resolve(null);
-    }));
-    imgs.forEach(img => {
-      if (img) { roundRect(ctx, fx, y, flagW, flagH, 8); ctx.save(); ctx.clip(); ctx.drawImage(img, fx, y, flagW, flagH); ctx.restore(); }
-      fx += flagW + gap;
-    });
-    if (countries.length > 6) {
-      ctx.textAlign = "left";
-      ctx.font = "700 26px Georgia, serif";
-      ctx.fillStyle = brass;
-      ctx.fillText(`+${countries.length - 6}`, fx + 10, y + 42);
-    }
+    y += 90;
 
     // Pie
     ctx.textAlign = "center";
@@ -321,7 +304,6 @@ export default function ShareCard({ trips }) {
       )}
 
       <canvas ref={canvasRef} style={{ display: "none" }} />
-      <div ref={plotlyHostRef} style={{ position: "absolute", left: -9999, top: -9999, width: 1000, height: 640 }} />
 
       {imgUrl && (
         <div>
