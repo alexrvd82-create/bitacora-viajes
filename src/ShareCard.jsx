@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
 import { COUNTRY_MAP, tripKm, flagUrl } from "./data.js";
 
-const ink = "#101d33", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
+const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
 
 const MODE_ICONS = { avion: "✈", coche: "🚗", tren: "🚆", barco: "⛴" };
 const MODE_LABELS = { avion: "AVIÓN", coche: "COCHE", tren: "TREN", barco: "BARCO" };
@@ -25,19 +25,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
-}
-
-/* Construye la secuencia de paradas en orden cronológico, con el medio de transporte de cada tramo */
-function buildItinerary(sortedTrips) {
-  const items = [];
-  sortedTrips.forEach(t => {
-    t.stops.forEach((s, idx) => {
-      const prev = items[items.length - 1];
-      if (prev && prev.city === s.city && prev.country === s.country) return;
-      items.push({ city: s.city, country: s.country, mode: idx === 0 ? null : t.mode });
-    });
-  });
-  return items;
 }
 
 export default function ShareCard({ trips }) {
@@ -66,148 +53,92 @@ export default function ShareCard({ trips }) {
     });
     const kmTotal = Object.values(kmByMode).reduce((a, b) => a + b, 0);
     const countries = [...countrySet];
-    const itinerary = buildItinerary(sortedTrips);
 
     const W = 1080, H = 1920;
     const canvas = canvasRef.current;
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
 
-    // Fondo
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, "#0c1729");
-    grad.addColorStop(1, "#16233d");
+    // Fondo moderno: degradado + halo de luz
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#0a1526");
+    grad.addColorStop(0.55, "#132038");
+    grad.addColorStop(1, "#1a2a4a");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(193,145,63,0.06)";
-    for (let y = 0; y < H; y += 48) for (let x = 0; x < W; x += 48) ctx.fillRect(x, y, 2, 2);
+    const glow = ctx.createRadialGradient(W * 0.8, 260, 40, W * 0.8, 260, 620);
+    glow.addColorStop(0, "rgba(193,145,63,0.20)");
+    glow.addColorStop(1, "rgba(193,145,63,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
 
-    // Marca
+    // Sello decorativo (logo) en la esquina superior derecha, como un matasellos
+    const logoImg = await loadImage("/logo.png");
+    if (logoImg) {
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.translate(W - 190, 190);
+      ctx.rotate((-9 * Math.PI) / 180);
+      ctx.drawImage(logoImg, -110, -110, 220, 220);
+      ctx.restore();
+    }
+
+    // Marca de la app, alineada a la izquierda
+    ctx.textAlign = "left";
     ctx.fillStyle = brass;
-    ctx.font = "600 30px 'IBM Plex Mono', monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("BITÁCORA DE VIAJES", W / 2, 100);
+    ctx.font = "600 26px 'IBM Plex Mono', monospace";
+    ctx.fillText("BITÁCORA DE VIAJES", 70, 100);
 
-    // Rango de fechas
+    // Rango de fechas, tipografía grande moderna
     ctx.fillStyle = paper;
-    ctx.font = "800 58px Georgia, serif";
+    ctx.font = "800 84px system-ui, -apple-system, sans-serif";
     const rangeText = start && end
       ? `${fmtDate(start)} — ${fmtDate(end)}`
       : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : "Mi viaje";
-    wrapCenteredText(ctx, rangeText, W / 2, 175, W - 160, 66);
+    wrapLeftText(ctx, rangeText, 70, 220, 760, 92);
 
-    // Itinerario tipo "pasaporte de sellos"
-    const panelY = 220, panelH = 620;
-    ctx.fillStyle = "rgba(255,255,255,0.02)";
-    roundRect(ctx, 40, panelY, W - 80, panelH, 20); ctx.fill();
-    ctx.strokeStyle = inkLine; ctx.lineWidth = 1.5;
-    roundRect(ctx, 40, panelY, W - 80, panelH, 20); ctx.stroke();
+    // Línea acento
+    ctx.strokeStyle = "rgba(193,145,63,0.5)";
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(70, 400); ctx.lineTo(340, 400); ctx.stroke();
 
+    let y = 560;
+
+    // KM total — número hero, moderno (sans en vez de serif)
     ctx.textAlign = "center";
-    ctx.font = "500 24px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = textDim;
-    ctx.fillText("RUTA DEL VIAJE", W / 2, panelY + 50);
-
-    const maxRows = 6;
-    const shown = itinerary.slice(0, maxRows);
-    const rowH = (panelH - 100) / Math.max(shown.length, 1);
-    const circleX = 130, circleR = 34, textX = 200;
-    const startY = panelY + 100;
-
-    const flagImgs = await Promise.all(shown.map(item => {
-      const c = COUNTRY_MAP[item.country];
-      return c ? loadImage(flagUrl(c.iso)) : Promise.resolve(null);
-    }));
-
-    shown.forEach((item, i) => {
-      const cy = startY + i * rowH + rowH / 2 - 20;
-      // línea de conexión al siguiente
-      if (i < shown.length - 1) {
-        ctx.strokeStyle = "rgba(193,145,63,0.5)";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([2, 10]);
-        ctx.beginPath();
-        ctx.moveTo(circleX, cy + circleR);
-        ctx.lineTo(circleX, cy + rowH);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        if (item.mode == null && shown[i + 1].mode) {
-          // el modo pertenece al tramo siguiente, se dibuja igual con el icono del siguiente item
-        }
-        const nextMode = shown[i + 1].mode;
-        if (nextMode) {
-          const midY = cy + (rowH + circleR) / 2 + 10;
-          ctx.fillStyle = ink;
-          ctx.beginPath(); ctx.arc(circleX, midY, 22, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = inkLine; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.arc(circleX, midY, 22, 0, Math.PI * 2); ctx.stroke();
-          ctx.font = "24px sans-serif";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillStyle = paper;
-          ctx.fillText(MODE_ICONS[nextMode], circleX, midY + 2);
-          ctx.textBaseline = "alphabetic";
-        }
-      }
-      // círculo con bandera
-      ctx.save();
-      ctx.beginPath(); ctx.arc(circleX, cy, circleR, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
-      if (flagImgs[i]) ctx.drawImage(flagImgs[i], circleX - circleR, cy - circleR, circleR * 2, circleR * 2);
-      else { ctx.fillStyle = inkLine; ctx.fillRect(circleX - circleR, cy - circleR, circleR * 2, circleR * 2); }
-      ctx.restore();
-      ctx.strokeStyle = brass; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(circleX, cy, circleR, 0, Math.PI * 2); ctx.stroke();
-
-      // texto
-      ctx.textAlign = "left";
-      ctx.font = "700 34px Georgia, serif";
-      ctx.fillStyle = paper;
-      ctx.fillText(item.city, textX, cy - 2);
-      ctx.font = "400 22px 'IBM Plex Mono', monospace";
-      ctx.fillStyle = textDim;
-      ctx.fillText(item.country, textX, cy + 28);
-    });
-
-    if (itinerary.length > maxRows) {
-      ctx.textAlign = "center";
-      ctx.font = "600 24px 'IBM Plex Mono', monospace";
-      ctx.fillStyle = brass;
-      ctx.fillText(`+ ${itinerary.length - maxRows} paradas más`, W / 2, panelY + panelH - 20);
-    }
-
-    let y = panelY + panelH + 100;
-
-    // KM total
     ctx.fillStyle = brass;
-    ctx.font = "800 150px Georgia, serif";
-    ctx.textAlign = "center";
+    ctx.font = "800 210px system-ui, -apple-system, sans-serif";
     ctx.fillText(kmTotal.toLocaleString("es-ES"), W / 2, y);
     ctx.fillStyle = textDim;
-    ctx.font = "500 30px 'IBM Plex Mono', monospace";
-    ctx.fillText("KILÓMETROS RECORRIDOS", W / 2, y + 50);
-    y += 130;
+    ctx.font = "600 32px 'IBM Plex Mono', monospace";
+    ctx.fillText("KILÓMETROS RECORRIDOS", W / 2, y + 56);
+    y += 150;
 
-    // Bloques de km por medio
+    // Chips de km por medio
     const modes = ["avion", "coche", "tren", "barco"].filter(m => kmByMode[m] > 0);
-    const blockH = 140;
+    const blockH = 150;
     const blockW = (W - 160 - (modes.length - 1) * 20) / Math.max(modes.length, 1);
     modes.forEach((m, i) => {
       const x = 80 + i * (blockW + 20);
-      ctx.fillStyle = "rgba(255,255,255,0.03)";
-      roundRect(ctx, x, y, blockW, blockH, 16); ctx.fill();
-      ctx.strokeStyle = inkLine; ctx.lineWidth = 1.5;
-      roundRect(ctx, x, y, blockW, blockH, 16); ctx.stroke();
+      const cardGrad = ctx.createLinearGradient(x, y, x, y + blockH);
+      cardGrad.addColorStop(0, "rgba(255,255,255,0.05)");
+      cardGrad.addColorStop(1, "rgba(255,255,255,0.015)");
+      ctx.fillStyle = cardGrad;
+      roundRect(ctx, x, y, blockW, blockH, 20); ctx.fill();
+      ctx.strokeStyle = "rgba(193,145,63,0.25)"; ctx.lineWidth = 1.5;
+      roundRect(ctx, x, y, blockW, blockH, 20); ctx.stroke();
       ctx.textAlign = "center";
-      ctx.font = "40px sans-serif";
+      ctx.font = "44px sans-serif";
       ctx.fillStyle = paper;
-      ctx.fillText(MODE_ICONS[m], x + blockW / 2, y + 56);
-      ctx.font = "700 30px Georgia, serif";
+      ctx.fillText(MODE_ICONS[m], x + blockW / 2, y + 60);
+      ctx.font = "800 32px system-ui, sans-serif";
       ctx.fillStyle = brass;
-      ctx.fillText(kmByMode[m].toLocaleString("es-ES"), x + blockW / 2, y + 98);
-      ctx.font = "500 18px 'IBM Plex Mono', monospace";
+      ctx.fillText(kmByMode[m].toLocaleString("es-ES"), x + blockW / 2, y + 106);
+      ctx.font = "600 18px 'IBM Plex Mono', monospace";
       ctx.fillStyle = textDim;
-      ctx.fillText(MODE_LABELS[m], x + blockW / 2, y + 122);
+      ctx.fillText(MODE_LABELS[m], x + blockW / 2, y + 132);
     });
-    y += blockH + 80;
+    y += blockH + 90;
 
     // Países / ciudades / tramos
     const stats = [
@@ -219,20 +150,57 @@ export default function ShareCard({ trips }) {
     stats.forEach((s, i) => {
       const x = 80 + i * sW + sW / 2;
       ctx.textAlign = "center";
-      ctx.font = "800 64px Georgia, serif";
+      ctx.font = "800 70px system-ui, sans-serif";
       ctx.fillStyle = paper;
       ctx.fillText(s.value, x, y);
-      ctx.font = "500 20px 'IBM Plex Mono', monospace";
+      ctx.font = "600 22px 'IBM Plex Mono', monospace";
       ctx.fillStyle = textDim;
-      ctx.fillText(s.label, x, y + 32);
+      ctx.fillText(s.label, x, y + 34);
     });
     y += 90;
+
+    ctx.strokeStyle = inkLine; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(140, y); ctx.lineTo(W - 140, y); ctx.stroke();
+    y += 60;
+
+    // Países visitados, con banderas, abajo
+    ctx.font = "600 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = textDim;
+    ctx.textAlign = "center";
+    ctx.fillText("PAÍSES VISITADOS", W / 2, y);
+    y += 44;
+
+    const flagW = 96, flagH = 66, gap = 20;
+    const maxFlags = Math.min(countries.length, 6);
+    const totalFlagsW = maxFlags * flagW + (maxFlags - 1) * gap;
+    let fx = (W - totalFlagsW) / 2;
+    const imgs = await Promise.all(countries.slice(0, 6).map(name => {
+      const c = COUNTRY_MAP[name];
+      return c ? loadImage(flagUrl(c.iso)) : Promise.resolve(null);
+    }));
+    imgs.forEach(img => {
+      if (img) {
+        ctx.save();
+        roundRect(ctx, fx, y, flagW, flagH, 10); ctx.clip();
+        ctx.drawImage(img, fx, y, flagW, flagH);
+        ctx.restore();
+        ctx.strokeStyle = "rgba(193,145,63,0.4)"; ctx.lineWidth = 1.5;
+        roundRect(ctx, fx, y, flagW, flagH, 10); ctx.stroke();
+      }
+      fx += flagW + gap;
+    });
+    if (countries.length > 6) {
+      ctx.textAlign = "left";
+      ctx.font = "700 30px system-ui, sans-serif";
+      ctx.fillStyle = brass;
+      ctx.fillText(`+${countries.length - 6}`, fx + 10, y + 46);
+    }
 
     // Pie
     ctx.textAlign = "center";
     ctx.font = "500 24px 'IBM Plex Mono', monospace";
     ctx.fillStyle = textDim;
-    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 50);
+    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 60);
 
     setImgUrl(canvas.toDataURL("image/png"));
     setGenerating(false);
@@ -244,7 +212,7 @@ export default function ShareCard({ trips }) {
     return `${parseInt(day)} ${months[parseInt(m) - 1]}`;
   }
 
-  function wrapCenteredText(ctx, text, cx, y, maxWidth, lineHeight) {
+  function wrapLeftText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = text.split(" ");
     let line = "", lines = [];
     words.forEach(w => {
@@ -253,7 +221,7 @@ export default function ShareCard({ trips }) {
       else line = test;
     });
     lines.push(line);
-    lines.forEach((l, i) => ctx.fillText(l, cx, y + i * lineHeight));
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineHeight));
   }
 
   function download() {

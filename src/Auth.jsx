@@ -37,7 +37,8 @@ export default function Auth() {
   return (
     <div style={{ minHeight: "100vh", background: ink, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter',sans-serif", color: paper }}>
       <div style={{ width: "100%", maxWidth: 360, background: panel, border: `1px solid ${line}`, borderRadius: 8, padding: 24 }}>
-        <div style={{ fontFamily: "'Bitter',serif", fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Bitácora de viajes</div>
+        <img src="/logo.png" alt="Bitácora de viajes" style={{ width: 90, height: 90, display: "block", margin: "0 auto 12px" }} />
+        <div style={{ fontFamily: "'Bitter',serif", fontSize: 24, fontWeight: 800, marginBottom: 4, textAlign: "center" }}>Bitácora de viajes</div>
         <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: "#94a3c4", marginBottom: 20 }}>{title}</div>
 
         <form onSubmit={handleSubmit}>

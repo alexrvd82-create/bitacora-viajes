@@ -94,7 +94,7 @@ export function tripKm(t) {
   for (let i = 0; i < stops.length - 1; i++) {
     const a = COUNTRY_MAP[stops[i].country], b = COUNTRY_MAP[stops[i + 1].country];
     if (!a || !b) return null;
-    total += haversineKm(a, b);
+    total += haversineKm(a, b) * (t.mode === "tren" ? 1.1 : 1);
   }
   return Math.round(total) * (t.round_trip ? 2 : 1);
 }
@@ -184,6 +184,9 @@ export async function computeTripKm(mode, resolvedStops) {
     if (mode === "coche") {
       const road = await drivingKm(a, b);
       total += road != null ? road : haversineKm(a, b);
+    } else if (mode === "tren") {
+      // El tren no sigue línea recta como el avión: aplicamos un margen por las curvas del trazado real
+      total += haversineKm(a, b) * 1.1;
     } else {
       total += haversineKm(a, b);
     }
