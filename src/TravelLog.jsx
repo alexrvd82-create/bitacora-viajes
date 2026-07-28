@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
 import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut } from "lucide-react";
 import { supabase } from "./supabaseClient";
+import ShareCard from "./ShareCard.jsx";
 import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
   MODE_LABELS, BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
@@ -239,6 +240,9 @@ export default function TravelLog({ session }) {
             {saving ? "Calculando distancia real..." : "Registrar viaje"}
           </button>
         </div>
+
+        {/* Compartir resumen */}
+        <ShareCard trips={trips} />
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
