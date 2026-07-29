@@ -78,7 +78,7 @@ export default function ShareCard({ trips }) {
     ctx.fillRect(0, 0, W, H);
 
     // Sello decorativo (logo) en la esquina superior derecha, como un matasellos
-    const logoImg = await loadImage("/logo.png");
+    const logoImg = await loadImage("/logo-v3.png");
     if (logoImg) {
       ctx.save();
       ctx.globalAlpha = 0.92;
@@ -176,29 +176,7 @@ export default function ShareCard({ trips }) {
     ctx.beginPath(); ctx.moveTo(140, y); ctx.lineTo(W - 140, y); ctx.stroke();
     y += 70;
 
-    // Cobertura mundial de toda la vida — bloque destacado, distinto del resumen del periodo
-    const covH = 190;
-    const covGrad = ctx.createLinearGradient(80, y, W - 80, y);
-    covGrad.addColorStop(0, "rgba(193,145,63,0.14)");
-    covGrad.addColorStop(1, "rgba(95,212,196,0.10)");
-    ctx.fillStyle = covGrad;
-    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.fill();
-    ctx.strokeStyle = "rgba(193,145,63,0.35)"; ctx.lineWidth = 2;
-    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.stroke();
-
-    ctx.textAlign = "center";
-    ctx.font = "700 26px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = textDim;
-    ctx.fillText("COBERTURA MUNDIAL · DE TODA LA VIDA", W / 2, y + 48);
-    ctx.font = "800 96px system-ui, sans-serif";
-    ctx.fillStyle = brass;
-    ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
-    ctx.font = "600 26px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = paper;
-    ctx.fillText(`${lifetimeCountrySet.size} de ${TOTAL_COUNTRIES} países visitados en total`, W / 2, y + 172);
-    y += covH + 50;
-
-    // Países visitados, con banderas, abajo
+    // Países visitados, con banderas
     ctx.font = "700 30px 'IBM Plex Mono', monospace";
     ctx.fillStyle = textDim;
     ctx.textAlign = "center";
@@ -230,6 +208,29 @@ export default function ShareCard({ trips }) {
       ctx.fillStyle = brass;
       ctx.fillText(`+${countries.length - 5}`, fx + 14, y + 62);
     }
+    y += flagH + 60;
+
+    // Cobertura mundial de toda la vida — bloque destacado, debajo de las banderas del periodo
+    const covH = 190;
+    const covGrad = ctx.createLinearGradient(80, y, W - 80, y);
+    covGrad.addColorStop(0, "rgba(193,145,63,0.14)");
+    covGrad.addColorStop(1, "rgba(95,212,196,0.10)");
+    ctx.fillStyle = covGrad;
+    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.fill();
+    ctx.strokeStyle = "rgba(193,145,63,0.35)"; ctx.lineWidth = 2;
+    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = textDim;
+    ctx.fillText("COBERTURA MUNDIAL · DE TODA LA VIDA", W / 2, y + 48);
+    ctx.font = "800 96px system-ui, sans-serif";
+    ctx.fillStyle = brass;
+    ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
+    ctx.font = "600 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = paper;
+    ctx.fillText(`${lifetimeCountrySet.size} de ${TOTAL_COUNTRIES} países visitados en total`, W / 2, y + 172);
+    y += covH + 60;
 
     // Pie
     ctx.textAlign = "center";

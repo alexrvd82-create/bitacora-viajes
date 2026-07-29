@@ -15,7 +15,7 @@ const MODES = [
   { id: "barco", label: "Barco", Icon: Ship },
 ];
 
-const ink = "#101d33", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", rust = "#b2453f", textDim = "#94a3c4";
+const ink = "#0a0f1e", inkPanel = "#141b30", inkLine = "#2a3654", paper = "#efe6d2", brass = "#c1913f", teal = "#4fd1c5", rust = "#e5484d", textDim = "#94a3c4";
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
 
 export default function TravelLog({ session }) {
@@ -148,10 +148,10 @@ export default function TravelLog({ session }) {
       <div style={{ maxWidth: 780, margin: "0 auto", padding: "32px 16px 64px" }}>
         {/* Header */}
         <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${inkLine}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <Globe2 size={18} color={brass} />
+                <img src="/logo-v3.png" alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
                 <span className="mono" style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: textDim }}>
                   REGISTRO DE RUTAS · KM · COBERTURA MUNDIAL
                 </span>
@@ -159,18 +159,15 @@ export default function TravelLog({ session }) {
               <h1 style={{ fontFamily: "'Bitter',serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
               <div style={{ fontSize: 12, color: textDim, marginTop: 4 }}>{session.user.email}</div>
             </div>
-            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-              <img src="/logo.png?v=2" alt="Bitácora de viajes" style={{ width: 64, height: 64, objectFit: "contain" }} />
-            </div>
             <button onClick={() => supabase.auth.signOut()}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 6, padding: "8px 12px", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>
+              style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, padding: "8px 12px", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>
               <LogOut size={14} /> Salir
             </button>
           </div>
         </div>
 
         {/* Formulario */}
-        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
+        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 16 }}>NUEVA RUTA</div>
           <div style={{ marginBottom: 16 }}>
             {stops.map((s, i) => {
@@ -182,7 +179,7 @@ export default function TravelLog({ session }) {
                     <div>
                       <label style={{ fontSize: 10, color: isFirst || isLast ? brass : textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{label}</label>
                       <select value={s.country} onChange={e => updateStop(i, "country", e.target.value)}
-                        style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 6, padding: 8 }}>
+                        style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 10, padding: 8 }}>
                         {COUNTRIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                       </select>
                     </div>
@@ -192,9 +189,9 @@ export default function TravelLog({ session }) {
                         onFocus={() => { if (suggestions[i]?.length) setOpenSuggestIndex(i); }}
                         onBlur={() => setTimeout(() => setOpenSuggestIndex(null), 150)}
                         placeholder={isFirst ? "Ciudad de salida" : isLast ? "Ciudad de llegada" : "Ciudad de la parada"}
-                        style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${s.lat != null ? teal : inkLine}`, color: paper, borderRadius: 6, padding: 8 }} />
+                        style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${s.lat != null ? teal : inkLine}`, color: paper, borderRadius: 10, padding: 8 }} />
                       {openSuggestIndex === i && suggestions[i]?.length > 0 && (
-                        <div style={{ position: "absolute", zIndex: 10, top: "100%", left: 0, right: 0, marginTop: 2, background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 6, maxHeight: 220, overflowY: "auto" }}>
+                        <div style={{ position: "absolute", zIndex: 10, top: "100%", left: 0, right: 0, marginTop: 2, background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 10, maxHeight: 220, overflowY: "auto" }}>
                           {suggestions[i].map((sug, si) => (
                             <button key={si} type="button" onMouseDown={() => selectSuggestion(i, sug)}
                               style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 10px", background: "none", border: "none", color: paper, cursor: "pointer", fontSize: 13, borderBottom: si < suggestions[i].length - 1 ? `1px solid ${inkLine}` : "none" }}>
@@ -215,7 +212,7 @@ export default function TravelLog({ session }) {
               );
             })}
             {mode !== "avion" && (
-              <button onClick={addStop} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, padding: "6px 12px", borderRadius: 6, border: `1px dashed ${inkLine}`, color: textDim, background: "none", cursor: "pointer" }}>
+              <button onClick={addStop} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, padding: "6px 12px", borderRadius: 10, border: `1px dashed ${inkLine}`, color: textDim, background: "none", cursor: "pointer" }}>
                 <Plus size={13} /> Añadir parada
               </button>
             )}
@@ -225,21 +222,21 @@ export default function TravelLog({ session }) {
             <div style={{ display: "flex", gap: 8 }}>
               {MODES.map(m => (
                 <button key={m.id} onClick={() => selectMode(m.id)}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 6, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace", cursor: "pointer",
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace", cursor: "pointer",
                     background: mode === m.id ? brass : "transparent", color: mode === m.id ? ink : textDim, border: `1px solid ${mode === m.id ? brass : inkLine}` }}>
                   <m.Icon size={14} /> {m.label}
                 </button>
               ))}
             </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", border: `1px solid ${inkLine}`, borderRadius: 6, fontSize: 12, color: textDim, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", border: `1px solid ${inkLine}`, borderRadius: 10, fontSize: 12, color: textDim, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace" }}>
               <input type="checkbox" checked={roundTrip} onChange={e => setRoundTrip(e.target.checked)} />
               Ida y vuelta (×2 km)
             </label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
-              style={{ marginLeft: "auto", background: ink, border: `1px solid ${inkLine}`, color: textDim, borderRadius: 6, padding: 8, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace" }} />
+              style={{ marginLeft: "auto", background: ink, border: `1px solid ${inkLine}`, color: textDim, borderRadius: 10, padding: 8, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace" }} />
           </div>
 
-          <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 6, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
+          <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
             {saving ? "Calculando distancia real..." : "Registrar viaje"}
           </button>
         </div>
@@ -255,7 +252,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Km por medio */}
-        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
+        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>KM POR MEDIO DE TRANSPORTE</span>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: textDim }}>
@@ -264,7 +261,7 @@ export default function TravelLog({ session }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
             {MODES.map(m => (
-              <div key={m.id} style={{ background: ink, border: `1px solid ${inkLine}`, borderRadius: 6, padding: 10, display: "flex", alignItems: "center", gap: 10 }}>
+              <div key={m.id} style={{ background: ink, border: `1px solid ${inkLine}`, borderRadius: 10, padding: 10, display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ background: inkPanel, borderRadius: 999, padding: 6, display: "flex" }}><m.Icon size={14} color={brass} /></div>
                 <div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{m.label.toUpperCase()}</div>
@@ -278,7 +275,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Insignias */}
-        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
+        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>INSIGNIAS</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
             {BADGES.map(b => {
@@ -286,7 +283,7 @@ export default function TravelLog({ session }) {
               const unlocked = value >= b.threshold;
               const pct = Math.min((value / b.threshold) * 100, 100);
               return (
-                <div key={b.id} style={{ background: ink, borderRadius: 6, padding: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1px solid ${unlocked ? brass : inkLine}`, opacity: unlocked ? 1 : 0.6 }}>
+                <div key={b.id} style={{ background: ink, borderRadius: 10, padding: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1px solid ${unlocked ? brass : inkLine}`, opacity: unlocked ? 1 : 0.6 }}>
                   {unlocked ? <Trophy size={20} color={brass} /> : <Lock size={16} color={textDim} />}
                   <div style={{ fontFamily: "'Bitter',serif", fontSize: 12, fontWeight: 700 }}>{b.title}</div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{b.desc}</div>
@@ -303,7 +300,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Gauge + continentes */}
-        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
+        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ width: 110, height: 110, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, ...gaugeStyle }}>
               <div style={{ width: 84, height: 84, borderRadius: 999, background: inkPanel, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -332,12 +329,12 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Mapa mundial */}
-        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
+        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>MAPA MUNDIAL</span>
             <span style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>rueda / pellizco para ampliar</span>
           </div>
-          <div style={{ borderRadius: 6, overflow: "hidden" }}>
+          <div style={{ borderRadius: 10, overflow: "hidden" }}>
             <Plot
               data={[{
                 type: "choropleth", locationmode: "ISO-3",
@@ -362,7 +359,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Banderas */}
-        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
+        <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>PAÍSES DEL MUNDO</span>
             <span style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>en color = visitado</span>
@@ -376,7 +373,7 @@ export default function TravelLog({ session }) {
                 {COUNTRIES.filter(x => x.cont === c.code).map(x => {
                   const visited = stats.countries.has(x.name);
                   return (
-                    <div key={x.name} title={x.name} style={{ background: ink, borderRadius: 6, padding: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <div key={x.name} title={x.name} style={{ background: ink, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                       <img src={flagUrl(x.iso)} alt={x.name} loading="lazy"
                         style={{ width: 32, height: 22, objectFit: "cover", borderRadius: 2, filter: visited ? "none" : "grayscale(1)", opacity: visited ? 1 : 0.4 }} />
                       <span style={{ fontSize: 8, textAlign: "center", lineHeight: 1.1, fontFamily: "'IBM Plex Mono',monospace", color: visited ? paper : textDim }}>{x.name}</span>
@@ -394,9 +391,9 @@ export default function TravelLog({ session }) {
             RUTAS REGISTRADAS ({trips.length})
           </div>
           {loading ? (
-            <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 8, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>Cargando...</div>
+            <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 14, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>Cargando...</div>
           ) : trips.length === 0 ? (
-            <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 8, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>
+            <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 14, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>
               Aún no hay rutas. Añade tu primer viaje arriba.
             </div>
           ) : (
@@ -405,7 +402,7 @@ export default function TravelLog({ session }) {
                 const M = MODES.find(m => m.id === t.mode);
                 const km = tripKm(t);
                 return (
-                  <div key={t.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                  <div key={t.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                     <div style={{ background: ink, borderRadius: 999, padding: 8, display: "flex", flexShrink: 0 }}><M.Icon size={15} color={brass} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
@@ -444,7 +441,7 @@ export default function TravelLog({ session }) {
 
 function StatBox({ label, value, suffix, sub, subDim }) {
   return (
-    <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 14 }}>
+    <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 14 }}>
       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{label}</div>
       <div style={{ fontFamily: "'Bitter',serif", fontSize: 22, fontWeight: 700, marginTop: 4 }}>
         {value}{suffix && <span style={{ fontSize: 13, color: textDim, fontWeight: 400 }}>{suffix}</span>}

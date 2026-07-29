@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
 
-const ink = "#101d33", panel = "#16233d", line = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", rust = "#b2453f", teal = "#3f7a76";
+const ink = "#0a0f1e", panel = "#141b30", line = "#2a3654", paper = "#efe6d2", brass = "#c1913f", rust = "#e5484d", teal = "#4fd1c5";
 
 export default function Auth() {
   const [mode, setMode] = useState("login"); // "login" | "signup" | "forgot"
@@ -36,21 +36,21 @@ export default function Auth() {
 
   return (
     <div style={{ minHeight: "100vh", background: ink, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter',sans-serif", color: paper }}>
-      <div style={{ width: "100%", maxWidth: 360, background: panel, border: `1px solid ${line}`, borderRadius: 8, padding: 24 }}>
-        <img src="/logo.png" alt="Bitácora de viajes" style={{ width: 90, height: 90, display: "block", margin: "0 auto 12px" }} />
+      <div style={{ width: "100%", maxWidth: 360, background: panel, border: `1px solid ${line}`, borderRadius: 14, padding: 24 }}>
+        <img src="/logo-v3.png" alt="Bitácora de viajes" style={{ width: 90, height: 90, display: "block", margin: "0 auto 12px" }} />
         <div style={{ fontFamily: "'Bitter',serif", fontSize: 24, fontWeight: 800, marginBottom: 4, textAlign: "center" }}>Bitácora de viajes</div>
         <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: "#94a3c4", marginBottom: 20 }}>{title}</div>
 
         <form onSubmit={handleSubmit}>
           <label style={{ fontSize: 11, color: "#94a3c4", display: "block", marginBottom: 4 }}>Email</label>
           <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-            style={{ width: "100%", background: ink, border: `1px solid ${line}`, color: paper, borderRadius: 6, padding: 8, marginBottom: 12 }} />
+            style={{ width: "100%", background: ink, border: `1px solid ${line}`, color: paper, borderRadius: 10, padding: 8, marginBottom: 12 }} />
 
           {mode !== "forgot" && (
             <>
               <label style={{ fontSize: 11, color: "#94a3c4", display: "block", marginBottom: 4 }}>Contraseña</label>
               <input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)}
-                style={{ width: "100%", background: ink, border: `1px solid ${line}`, color: paper, borderRadius: 6, padding: 8, marginBottom: 8 }} />
+                style={{ width: "100%", background: ink, border: `1px solid ${line}`, color: paper, borderRadius: 10, padding: 8, marginBottom: 8 }} />
             </>
           )}
 
@@ -68,7 +68,7 @@ export default function Auth() {
             <div style={{ fontSize: 12, marginBottom: 12, color: msg.type === "error" ? rust : teal }}>{msg.text}</div>
           )}
 
-          <button type="submit" disabled={loading} style={{ width: "100%", background: brass, color: ink, border: "none", borderRadius: 6, padding: 10, fontWeight: 600, cursor: "pointer" }}>
+          <button type="submit" disabled={loading} style={{ width: "100%", background: brass, color: ink, border: "none", borderRadius: 10, padding: 10, fontWeight: 600, cursor: "pointer" }}>
             {loading ? "Un momento..." : mode === "login" ? "Entrar" : mode === "signup" ? "Registrarme" : "Enviar enlace de recuperación"}
           </button>
         </form>
