@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
-import { COUNTRY_MAP, tripKm, flagUrl } from "./data.js";
+import { COUNTRY_MAP, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
 
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
 
@@ -53,6 +53,11 @@ export default function ShareCard({ trips }) {
     });
     const kmTotal = Object.values(kmByMode).reduce((a, b) => a + b, 0);
     const countries = [...countrySet];
+
+    // Cobertura mundial de toda la vida (todos los viajes, no solo el rango de fechas elegido)
+    const lifetimeCountrySet = new Set();
+    trips.forEach(t => t.stops.forEach(s => lifetimeCountrySet.add(s.country)));
+    const lifetimePct = (lifetimeCountrySet.size / TOTAL_COUNTRIES) * 100;
 
     const W = 1080, H = 1920;
     const canvas = canvasRef.current;
@@ -146,15 +151,18 @@ export default function ShareCard({ trips }) {
     y += blockH + 110;
 
     // Países / ciudades / tramos
+    const mint = "#5fd4c4", coral = "#e8916a";
     const stats = [
-      { value: countrySet.size, label: "PAÍSES" },
-      { value: citySet.size, label: "CIUDADES" },
-      { value: filtered.length, label: "TRAMOS" },
+      { value: countrySet.size, label: "PAÍSES", accent: brass },
+      { value: citySet.size, label: "CIUDADES", accent: mint },
+      { value: filtered.length, label: "TRAYECTOS", accent: coral },
     ];
     const sW = (W - 160) / 3;
     stats.forEach((s, i) => {
       const x = 80 + i * sW + sW / 2;
       ctx.textAlign = "center";
+      ctx.fillStyle = s.accent;
+      roundRect(ctx, x - 16, y - 90, 32, 6, 3); ctx.fill();
       ctx.font = "800 96px system-ui, sans-serif";
       ctx.fillStyle = paper;
       ctx.fillText(s.value, x, y);
@@ -168,11 +176,33 @@ export default function ShareCard({ trips }) {
     ctx.beginPath(); ctx.moveTo(140, y); ctx.lineTo(W - 140, y); ctx.stroke();
     y += 70;
 
+    // Cobertura mundial de toda la vida — bloque destacado, distinto del resumen del periodo
+    const covH = 190;
+    const covGrad = ctx.createLinearGradient(80, y, W - 80, y);
+    covGrad.addColorStop(0, "rgba(193,145,63,0.14)");
+    covGrad.addColorStop(1, "rgba(95,212,196,0.10)");
+    ctx.fillStyle = covGrad;
+    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.fill();
+    ctx.strokeStyle = "rgba(193,145,63,0.35)"; ctx.lineWidth = 2;
+    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = textDim;
+    ctx.fillText("COBERTURA MUNDIAL · DE TODA LA VIDA", W / 2, y + 48);
+    ctx.font = "800 96px system-ui, sans-serif";
+    ctx.fillStyle = brass;
+    ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
+    ctx.font = "600 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = paper;
+    ctx.fillText(`${lifetimeCountrySet.size} de ${TOTAL_COUNTRIES} países visitados en total`, W / 2, y + 172);
+    y += covH + 50;
+
     // Países visitados, con banderas, abajo
     ctx.font = "700 30px 'IBM Plex Mono', monospace";
     ctx.fillStyle = textDim;
     ctx.textAlign = "center";
-    ctx.fillText("PAÍSES VISITADOS", W / 2, y);
+    ctx.fillText("PAÍSES VISITADOS EN ESTE PERIODO", W / 2, y);
     y += 56;
 
     const flagW = 150, flagH = 102, gap = 26;
