@@ -148,7 +148,7 @@ export default function TravelLog({ session }) {
       <div style={{ maxWidth: 780, margin: "0 auto", padding: "32px 16px 64px" }}>
         {/* Header */}
         <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${inkLine}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <Globe2 size={18} color={brass} />
@@ -159,8 +159,11 @@ export default function TravelLog({ session }) {
               <h1 style={{ fontFamily: "'Bitter',serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
               <div style={{ fontSize: 12, color: textDim, marginTop: 4 }}>{session.user.email}</div>
             </div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+              <img src="/logo.png?v=2" alt="Bitácora de viajes" style={{ width: 64, height: 64, objectFit: "contain" }} />
+            </div>
             <button onClick={() => supabase.auth.signOut()}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 6, padding: "8px 12px", cursor: "pointer", fontSize: 12 }}>
+              style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 6, padding: "8px 12px", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>
               <LogOut size={14} /> Salir
             </button>
           </div>
