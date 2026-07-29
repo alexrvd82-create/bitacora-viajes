@@ -78,7 +78,7 @@ export default function ShareCard({ trips }) {
     ctx.fillRect(0, 0, W, H);
 
     // Sello decorativo (logo) en la esquina superior derecha, como un matasellos
-    const logoImg = await loadImage("/logo-v3.png");
+    const logoImg = await loadImage("/logo-v4.png");
     if (logoImg) {
       ctx.save();
       ctx.globalAlpha = 0.92;

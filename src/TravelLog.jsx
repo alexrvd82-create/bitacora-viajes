@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
-import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut } from "lucide-react";
+import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
 import {
@@ -15,10 +15,18 @@ const MODES = [
   { id: "barco", label: "Barco", Icon: Ship },
 ];
 
-const ink = "#0a0f1e", inkPanel = "#141b30", inkLine = "#2a3654", paper = "#efe6d2", brass = "#c1913f", teal = "#4fd1c5", rust = "#e5484d", textDim = "#94a3c4";
+const THEMES = {
+  dark: { ink: "#0a0f1e", inkPanel: "#141b30", inkLine: "#2a3654", paper: "#efe6d2", brass: "#c1913f", teal: "#4fd1c5", rust: "#e5484d", textDim: "#94a3c4" },
+  light: { ink: "#f6f0e3", inkPanel: "#fffdf8", inkLine: "#e3d8c0", paper: "#2b2210", brass: "#a8752f", teal: "#1f8f83", rust: "#c23b3f", textDim: "#8a7c60" },
+};
+
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
 
 export default function TravelLog({ session }) {
+  const [dark, setDark] = useState(() => localStorage.getItem("bitacora-theme") !== "light");
+  useEffect(() => { localStorage.setItem("bitacora-theme", dark ? "dark" : "light"); }, [dark]);
+  const { ink, inkPanel, inkLine, paper, brass, teal, rust, textDim } = THEMES[dark ? "dark" : "light"];
+
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stops, setStops] = useState(emptyStops());
@@ -150,8 +158,8 @@ export default function TravelLog({ session }) {
         <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${inkLine}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
             <div style={{ minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <img src="/logo-v3.png" alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <img src="/logo-v4.png" alt="" style={{ width: 34, height: 34, objectFit: "contain" }} />
                 <span className="mono" style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: textDim }}>
                   REGISTRO DE RUTAS · KM · COBERTURA MUNDIAL
                 </span>
@@ -159,10 +167,16 @@ export default function TravelLog({ session }) {
               <h1 style={{ fontFamily: "'Bitter',serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
               <div style={{ fontSize: 12, color: textDim, marginTop: 4 }}>{session.user.email}</div>
             </div>
-            <button onClick={() => supabase.auth.signOut()}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, padding: "8px 12px", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>
-              <LogOut size={14} /> Salir
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <button onClick={() => setDark(d => !d)} aria-label="Cambiar tema"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
+                {dark ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
+              <button onClick={() => supabase.auth.signOut()}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, padding: "8px 12px", cursor: "pointer", fontSize: 12 }}>
+                <LogOut size={14} /> Salir
+              </button>
+            </div>
           </div>
         </div>
 
@@ -219,7 +233,7 @@ export default function TravelLog({ session }) {
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div className="mode-btns">
               {MODES.map(m => (
                 <button key={m.id} onClick={() => selectMode(m.id)}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace", cursor: "pointer",
@@ -246,9 +260,9 @@ export default function TravelLog({ session }) {
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
-          <StatBox label="PAÍSES" value={stats.countries.size} suffix={`/${TOTAL_COUNTRIES}`} sub={`${stats.pctWorld.toFixed(1)}% del mundo`} />
-          <StatBox label="CONTINENTES" value={stats.contsVisited} suffix="/6" sub={`${((stats.contsVisited / 6) * 100).toFixed(0)}% explorado`} />
-          <StatBox label="CIUDADES" value={stats.cities.size} sub="distintas visitadas" subDim />
+          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label="PAÍSES" value={stats.countries.size} suffix={`/${TOTAL_COUNTRIES}`} sub={`${stats.pctWorld.toFixed(1)}% del mundo`} />
+          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label="CONTINENTES" value={stats.contsVisited} suffix="/6" sub={`${((stats.contsVisited / 6) * 100).toFixed(0)}% explorado`} />
+          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label="CIUDADES" value={stats.cities.size} sub="distintas visitadas" subDim />
         </div>
 
         {/* Km por medio */}
@@ -439,7 +453,8 @@ export default function TravelLog({ session }) {
   );
 }
 
-function StatBox({ label, value, suffix, sub, subDim }) {
+function StatBox({ theme, label, value, suffix, sub, subDim }) {
+  const { inkPanel, inkLine, textDim, brass } = theme;
   return (
     <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 14 }}>
       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{label}</div>
