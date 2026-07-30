@@ -4,6 +4,24 @@ import { COUNTRY_MAP, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
 
 // Colores de la propia tarjeta generada (imagen): se queda con su estilo oscuro de marca
 // siempre, para que se vea igual la compartas desde el tema claro o el oscuro de la app.
+// Colores de la propia tarjeta generada (imagen), en versión clara y oscura, según el tema de la app.
+const CARD_THEMES = {
+  dark: {
+    bgStops: ["#0a1526", "#132038", "#1a2a4a"],
+    brassRGB: "193,145,63", tealRGB: "95,212,196",
+    ink: "#0c1729", inkLine: "#2b3c5c",
+    paper: "#efe6d2", brass: "#c1913f", textDim: "#c7d0e6",
+    blockOverlay: ["rgba(255,255,255,0.07)", "rgba(255,255,255,0.02)"],
+  },
+  light: {
+    bgStops: ["#fbf4e5", "#f3e7cd", "#ecdca8"],
+    brassRGB: "138,90,30", tealRGB: "13,110,99",
+    ink: "#f6efe0", inkLine: "#c9b280",
+    paper: "#241a08", brass: "#8a5a1e", textDim: "#5c4d30",
+    blockOverlay: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0.25)"],
+  },
+};
+// (colores usados solo por el panel de controles de la web, no por la imagen generada)
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
 
 const MODE_ICONS = { avion: "✈", coche: "🚗", tren: "🚆", barco: "⛴" };
@@ -29,7 +47,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-export default function ShareCard({ trips, theme }) {
+export default function ShareCard({ trips, theme, dark = true }) {
   const ui = theme || { ink, inkPanel, inkLine, paper, brass, teal, textDim };
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -46,6 +64,7 @@ export default function ShareCard({ trips, theme }) {
 
   async function generate() {
     setGenerating(true);
+    const C = CARD_THEMES[dark ? "dark" : "light"];
     const sortedTrips = [...filtered].sort((a, b) => (a.trip_date || "").localeCompare(b.trip_date || ""));
     const countrySet = new Set(), citySet = new Set();
     const kmByMode = { avion: 0, coche: 0, tren: 0, barco: 0 };
@@ -69,94 +88,94 @@ export default function ShareCard({ trips, theme }) {
 
     // Fondo moderno: degradado + halo de luz
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, "#0a1526");
-    grad.addColorStop(0.55, "#132038");
-    grad.addColorStop(1, "#1a2a4a");
+    grad.addColorStop(0, C.bgStops[0]);
+    grad.addColorStop(0.55, C.bgStops[1]);
+    grad.addColorStop(1, C.bgStops[2]);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-    const glow = ctx.createRadialGradient(W * 0.8, 260, 40, W * 0.8, 260, 700);
-    glow.addColorStop(0, "rgba(193,145,63,0.22)");
-    glow.addColorStop(1, "rgba(193,145,63,0)");
+    const glow = ctx.createRadialGradient(W * 0.78, 300, 40, W * 0.78, 300, 650);
+    glow.addColorStop(0, `rgba(${C.brassRGB},${dark ? 0.22 : 0.16})`);
+    glow.addColorStop(1, `rgba(${C.brassRGB},0)`);
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, H);
 
-    // Sello decorativo (logo) en la esquina superior derecha, como un matasellos
-    const logoImg = await loadImage("/logo-v4.png");
-    if (logoImg) {
-      ctx.save();
-      ctx.globalAlpha = 0.92;
-      ctx.translate(W - 200, 200);
-      ctx.rotate((-9 * Math.PI) / 180);
-      ctx.drawImage(logoImg, -125, -125, 250, 250);
-      ctx.restore();
-    }
-
     // Marca de la app
     ctx.textAlign = "left";
-    ctx.fillStyle = brass;
+    ctx.fillStyle = C.brass;
     ctx.font = "700 30px 'IBM Plex Mono', monospace";
-    ctx.fillText("BITÁCORA DE VIAJES", 70, 110);
+    ctx.fillText("BITÁCORA DE VIAJES", 70, 100);
 
-    // Rango de fechas, tipografía grande moderna
-    ctx.fillStyle = paper;
+    // Rango de fechas, tipografía grande moderna (ancho recortado para dejar sitio al sello)
+    ctx.fillStyle = C.paper;
     const rangeText = start && end
       ? `${fmtDate(start)} — ${fmtDate(end)}`
       : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : "Mi viaje";
-    const rangeSize = fitFontSize(ctx, rangeText, 720, 118, s => `800 ${s}px system-ui, -apple-system, sans-serif`);
+    const rangeSize = fitFontSize(ctx, rangeText, 560, 108, s => `800 ${s}px system-ui, -apple-system, sans-serif`);
     ctx.font = `800 ${rangeSize}px system-ui, -apple-system, sans-serif`;
-    wrapLeftText(ctx, rangeText, 70, 250, 760, rangeSize * 1.12);
+    wrapLeftText(ctx, rangeText, 70, 250, 600, rangeSize * 1.15);
+
+    // Sello decorativo (logo), separado del texto de fecha
+    const logoImg = await loadImage("/logo-v4.png");
+    if (logoImg) {
+      ctx.save();
+      ctx.globalAlpha = dark ? 0.92 : 0.85;
+      ctx.translate(W - 155, 195);
+      ctx.rotate((-9 * Math.PI) / 180);
+      ctx.drawImage(logoImg, -105, -105, 210, 210);
+      ctx.restore();
+    }
 
     // Línea acento
-    ctx.strokeStyle = "rgba(193,145,63,0.55)";
+    ctx.strokeStyle = `rgba(${C.brassRGB},0.55)`;
     ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(70, 450); ctx.lineTo(360, 450); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(70, 460); ctx.lineTo(360, 460); ctx.stroke();
 
-    let y = 680;
+    let y = 690;
 
     // KM total — número hero, grande, se autoajusta para no salirse
     ctx.textAlign = "center";
-    ctx.fillStyle = brass;
+    ctx.fillStyle = C.brass;
     const kmText = kmTotal.toLocaleString("es-ES");
     const kmSize = fitFontSize(ctx, kmText, 940, 260, s => `800 ${s}px system-ui, -apple-system, sans-serif`);
     ctx.font = `800 ${kmSize}px system-ui, -apple-system, sans-serif`;
     ctx.fillText(kmText, W / 2, y);
-    ctx.fillStyle = textDim;
-    ctx.font = "700 38px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.textDim;
+    ctx.font = "800 40px 'IBM Plex Mono', monospace";
     ctx.fillText("KILÓMETROS RECORRIDOS", W / 2, y + 66);
     y += 200;
 
     // Chips de km por medio
     const modes = ["avion", "coche", "tren", "barco"].filter(m => kmByMode[m] > 0);
-    const blockH = 200;
+    const blockH = 210;
     const blockW = (W - 160 - (modes.length - 1) * 22) / Math.max(modes.length, 1);
     modes.forEach((m, i) => {
       const x = 80 + i * (blockW + 22);
       const cardGrad = ctx.createLinearGradient(x, y, x, y + blockH);
-      cardGrad.addColorStop(0, "rgba(255,255,255,0.06)");
-      cardGrad.addColorStop(1, "rgba(255,255,255,0.02)");
+      cardGrad.addColorStop(0, C.blockOverlay[0]);
+      cardGrad.addColorStop(1, C.blockOverlay[1]);
       ctx.fillStyle = cardGrad;
       roundRect(ctx, x, y, blockW, blockH, 22); ctx.fill();
-      ctx.strokeStyle = "rgba(193,145,63,0.3)"; ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgba(${C.brassRGB},0.35)`; ctx.lineWidth = 2;
       roundRect(ctx, x, y, blockW, blockH, 22); ctx.stroke();
       ctx.textAlign = "center";
-      ctx.font = "62px sans-serif";
-      ctx.fillStyle = paper;
-      ctx.fillText(MODE_ICONS[m], x + blockW / 2, y + 84);
+      ctx.font = "84px sans-serif";
+      ctx.fillStyle = C.paper;
+      ctx.fillText(MODE_ICONS[m], x + blockW / 2, y + 96);
       const modeKmText = kmByMode[m].toLocaleString("es-ES");
       const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px system-ui, sans-serif`);
       ctx.font = `800 ${modeKmSize}px system-ui, sans-serif`;
-      ctx.fillStyle = brass;
-      ctx.fillText(modeKmText, x + blockW / 2, y + 144);
-      ctx.font = "700 24px 'IBM Plex Mono', monospace";
-      ctx.fillStyle = textDim;
-      ctx.fillText(MODE_LABELS[m], x + blockW / 2, y + 178);
+      ctx.fillStyle = C.brass;
+      ctx.fillText(modeKmText, x + blockW / 2, y + 154);
+      ctx.font = "800 25px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = C.textDim;
+      ctx.fillText(MODE_LABELS[m], x + blockW / 2, y + 188);
     });
     y += blockH + 110;
 
     // Países / ciudades / tramos
     const mint = "#5fd4c4", coral = "#e8916a";
     const stats = [
-      { value: countrySet.size, label: "PAÍSES", accent: brass },
+      { value: countrySet.size, label: "PAÍSES", accent: C.brass },
       { value: citySet.size, label: "CIUDADES", accent: mint },
       { value: filtered.length, label: "TRAYECTOS", accent: coral },
     ];
@@ -167,21 +186,21 @@ export default function ShareCard({ trips, theme }) {
       ctx.fillStyle = s.accent;
       roundRect(ctx, x - 16, y - 90, 32, 6, 3); ctx.fill();
       ctx.font = "800 96px system-ui, sans-serif";
-      ctx.fillStyle = paper;
+      ctx.fillStyle = C.paper;
       ctx.fillText(s.value, x, y);
-      ctx.font = "700 28px 'IBM Plex Mono', monospace";
-      ctx.fillStyle = textDim;
+      ctx.font = "800 29px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = C.textDim;
       ctx.fillText(s.label, x, y + 42);
     });
     y += 110;
 
-    ctx.strokeStyle = inkLine; ctx.lineWidth = 2;
+    ctx.strokeStyle = C.inkLine; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(140, y); ctx.lineTo(W - 140, y); ctx.stroke();
     y += 70;
 
     // Países visitados, con banderas
-    ctx.font = "700 30px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = textDim;
+    ctx.font = "800 31px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.textDim;
     ctx.textAlign = "center";
     ctx.fillText("PAÍSES VISITADOS EN ESTE PERIODO", W / 2, y);
     y += 56;
@@ -200,7 +219,7 @@ export default function ShareCard({ trips, theme }) {
         roundRect(ctx, fx, y, flagW, flagH, 14); ctx.clip();
         ctx.drawImage(img, fx, y, flagW, flagH);
         ctx.restore();
-        ctx.strokeStyle = "rgba(193,145,63,0.45)"; ctx.lineWidth = 2;
+        ctx.strokeStyle = `rgba(${C.brassRGB},0.5)`; ctx.lineWidth = 2;
         roundRect(ctx, fx, y, flagW, flagH, 14); ctx.stroke();
       }
       fx += flagW + gap;
@@ -208,7 +227,7 @@ export default function ShareCard({ trips, theme }) {
     if (countries.length > 5) {
       ctx.textAlign = "left";
       ctx.font = "800 40px system-ui, sans-serif";
-      ctx.fillStyle = brass;
+      ctx.fillStyle = C.brass;
       ctx.fillText(`+${countries.length - 5}`, fx + 14, y + 62);
     }
     y += flagH + 60;
@@ -216,32 +235,32 @@ export default function ShareCard({ trips, theme }) {
     // Cobertura mundial de toda la vida — bloque destacado, debajo de las banderas del periodo
     const covH = 190;
     const covGrad = ctx.createLinearGradient(80, y, W - 80, y);
-    covGrad.addColorStop(0, "rgba(193,145,63,0.14)");
-    covGrad.addColorStop(1, "rgba(95,212,196,0.10)");
+    covGrad.addColorStop(0, `rgba(${C.brassRGB},0.16)`);
+    covGrad.addColorStop(1, `rgba(${C.tealRGB},0.12)`);
     ctx.fillStyle = covGrad;
     roundRect(ctx, 80, y, W - 160, covH, 26); ctx.fill();
-    ctx.strokeStyle = "rgba(193,145,63,0.35)"; ctx.lineWidth = 2;
+    ctx.strokeStyle = `rgba(${C.brassRGB},0.4)`; ctx.lineWidth = 2;
     roundRect(ctx, 80, y, W - 160, covH, 26); ctx.stroke();
 
     ctx.textAlign = "center";
-    ctx.font = "700 26px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = textDim;
-    ctx.fillText("COBERTURA MUNDIAL · DE TODA LA VIDA", W / 2, y + 48);
+    ctx.font = "800 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.textDim;
+    ctx.fillText("DESDE QUE EMPECÉ A VIAJAR", W / 2, y + 48);
     ctx.font = "800 96px system-ui, sans-serif";
-    ctx.fillStyle = brass;
+    ctx.fillStyle = C.brass;
     ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
-    ctx.font = "600 26px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = paper;
-    ctx.fillText(`${lifetimeCountrySet.size} de ${TOTAL_COUNTRIES} países visitados en total`, W / 2, y + 172);
+    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.paper;
+    ctx.fillText(`${lifetimeCountrySet.size} de ${TOTAL_COUNTRIES} países del mundo`, W / 2, y + 172);
     y += covH + 60;
 
     // Pie
     ctx.textAlign = "center";
-    ctx.font = "600 28px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = textDim;
+    ctx.font = "700 28px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.textDim;
     ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 60);
-    ctx.font = "600 22px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = brass;
+    ctx.font = "700 22px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.brass;
     ctx.fillText("bitacora-viajes-arvd.vercel.app", W / 2, H - 28);
 
     setImgUrl(canvas.toDataURL("image/png"));

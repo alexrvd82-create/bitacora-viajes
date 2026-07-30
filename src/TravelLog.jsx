@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
-import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Heart } from "lucide-react";
+import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
 import {
@@ -180,8 +180,8 @@ export default function TravelLog({ session }) {
               </div>
               <div style={{ fontSize: 12, color: textDim }}>{session.user.email}</div>
               <a href="https://www.paypal.com/donate/?business=alexrvd82@gmail.com&currency_code=EUR" target="_blank" rel="noopener noreferrer"
-                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: brass, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
-                <Heart size={12} /> Apoya este proyecto
+                style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, padding: "7px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
+                <Coffee size={14} /> Invítame a un café
               </a>
             </div>
           </div>
@@ -263,7 +263,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Compartir resumen */}
-        <ShareCard trips={trips} theme={{ ink, inkPanel, inkLine, paper, brass, teal, textDim }} />
+        <ShareCard trips={trips} theme={{ ink, inkPanel, inkLine, paper, brass, teal, textDim }} dark={dark} />
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
