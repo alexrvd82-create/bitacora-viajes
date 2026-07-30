@@ -69,9 +69,11 @@ export const MODE_LABELS = { avion: "Avión", coche: "Coche", tren: "Tren", barc
 
 export const BADGES = [
   { id: "km100k", type: "km", threshold: 100000, title: "100.000 km", desc: "Distancia total recorrida" },
-  { id: "km250k", type: "km", threshold: 250000, title: "250.000 km", desc: "Cuarto de millón de km" },
   { id: "km500k", type: "km", threshold: 500000, title: "500.000 km", desc: "Medio millón de km" },
   { id: "cities10", type: "cities", threshold: 10, title: "10 ciudades", desc: "Primeras diez distintas" },
+  { id: "countries10", type: "countries", threshold: 10, title: "10 países", desc: "Diez países distintos" },
+  { id: "continents6", type: "continents", threshold: 6, title: "6 continentes", desc: "Todos los continentes" },
+  { id: "flights5", type: "flights", threshold: 5, title: "5 vuelos", desc: "Cinco despegues registrados" },
 ];
 
 export function flagUrl(iso) {

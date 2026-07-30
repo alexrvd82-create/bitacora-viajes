@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
 import { COUNTRY_MAP, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
 
+// Colores de la propia tarjeta generada (imagen): se queda con su estilo oscuro de marca
+// siempre, para que se vea igual la compartas desde el tema claro o el oscuro de la app.
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
 
 const MODE_ICONS = { avion: "✈", coche: "🚗", tren: "🚆", barco: "⛴" };
@@ -27,7 +29,8 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-export default function ShareCard({ trips }) {
+export default function ShareCard({ trips, theme }) {
+  const ui = theme || { ink, inkPanel, inkLine, paper, brass, teal, textDim };
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [imgUrl, setImgUrl] = useState(null);
@@ -237,6 +240,9 @@ export default function ShareCard({ trips }) {
     ctx.font = "600 28px 'IBM Plex Mono', monospace";
     ctx.fillStyle = textDim;
     ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 60);
+    ctx.font = "600 22px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = brass;
+    ctx.fillText("bitacora-viajes-arvd.vercel.app", W / 2, H - 28);
 
     setImgUrl(canvas.toDataURL("image/png"));
     setGenerating(false);
@@ -288,45 +294,45 @@ export default function ShareCard({ trips }) {
   }
 
   return (
-    <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 8, padding: 18, marginBottom: 24 }}>
-      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>
+    <div style={{ background: ui.inkPanel, border: `1px solid ${ui.inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
+      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: ui.brass, marginBottom: 12 }}>
         COMPARTIR RESUMEN
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
-          <label style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>DESDE</label>
+          <label style={{ fontSize: 10, color: ui.textDim, fontFamily: "'IBM Plex Mono',monospace" }}>DESDE</label>
           <input type="date" value={start} onChange={e => setStart(e.target.value)}
-            style={{ display: "block", marginTop: 4, background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 6, padding: 8, fontSize: 12 }} />
+            style={{ display: "block", marginTop: 4, background: ui.ink, border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, padding: 8, fontSize: 12 }} />
         </div>
         <div>
-          <label style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>HASTA</label>
+          <label style={{ fontSize: 10, color: ui.textDim, fontFamily: "'IBM Plex Mono',monospace" }}>HASTA</label>
           <input type="date" value={end} onChange={e => setEnd(e.target.value)}
-            style={{ display: "block", marginTop: 4, background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 6, padding: 8, fontSize: 12 }} />
+            style={{ display: "block", marginTop: 4, background: ui.ink, border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, padding: 8, fontSize: 12 }} />
         </div>
         <div style={{ alignSelf: "flex-end" }}>
           <button onClick={generate} disabled={generating || filtered.length === 0}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: brass, color: ink, border: "none", borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: generating || filtered.length === 0 ? 0.6 : 1 }}>
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: ui.brass, color: ui.ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: generating || filtered.length === 0 ? 0.6 : 1 }}>
             <ImageIcon size={15} /> {generating ? "Generando..." : "Generar tarjeta"}
           </button>
         </div>
       </div>
       {(!start && !end) && (
-        <div style={{ fontSize: 11, color: textDim, marginBottom: 10 }}>Deja las fechas vacías para incluir todos tus viajes con fecha registrada.</div>
+        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>Deja las fechas vacías para incluir todos tus viajes con fecha registrada.</div>
       )}
       {start && end && filtered.length === 0 && (
-        <div style={{ fontSize: 11, color: textDim, marginBottom: 10 }}>No hay viajes con fecha en ese rango.</div>
+        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>No hay viajes con fecha en ese rango.</div>
       )}
 
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       {imgUrl && (
         <div>
-          <img src={imgUrl} alt="Resumen de viaje" style={{ width: "100%", maxWidth: 280, borderRadius: 8, border: `1px solid ${inkLine}`, display: "block", margin: "0 auto 14px" }} />
+          <img src={imgUrl} alt="Resumen de viaje" style={{ width: "100%", maxWidth: 280, borderRadius: 14, border: `1px solid ${ui.inkLine}`, display: "block", margin: "0 auto 14px" }} />
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-            <button onClick={download} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: "none", border: `1px solid ${inkLine}`, color: paper, borderRadius: 6, cursor: "pointer", fontSize: 13 }}>
+            <button onClick={download} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: "none", border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, cursor: "pointer", fontSize: 13 }}>
               <Download size={14} /> Descargar
             </button>
-            <button onClick={share} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: teal, border: "none", color: paper, borderRadius: 6, cursor: "pointer", fontSize: 13 }}>
+            <button onClick={share} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: ui.teal, border: "none", color: ui.ink === "#efe6d2" ? "#efe6d2" : "#fff", borderRadius: 10, cursor: "pointer", fontSize: 13 }}>
               <Share2 size={14} /> Compartir
             </button>
           </div>

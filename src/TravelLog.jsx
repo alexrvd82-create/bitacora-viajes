@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
-import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon } from "lucide-react";
+import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Heart } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
 import {
@@ -17,7 +17,7 @@ const MODES = [
 
 const THEMES = {
   dark: { ink: "#0a0f1e", inkPanel: "#141b30", inkLine: "#2a3654", paper: "#efe6d2", brass: "#c1913f", teal: "#4fd1c5", rust: "#e5484d", textDim: "#94a3c4" },
-  light: { ink: "#f6f0e3", inkPanel: "#fffdf8", inkLine: "#e3d8c0", paper: "#2b2210", brass: "#a8752f", teal: "#1f8f83", rust: "#c23b3f", textDim: "#8a7c60" },
+  light: { ink: "#f6efe0", inkPanel: "#ecdfc0", inkLine: "#c9b280", paper: "#231a08", brass: "#8a5a1e", teal: "#0d6e63", rust: "#a52a2a", textDim: "#5c4d30" },
 };
 
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
@@ -143,8 +143,9 @@ export default function TravelLog({ session }) {
       if (c) contCounts[c.cont].add(name);
     });
     const contsVisited = CONTINENTS.filter(c => contCounts[c.code].size > 0).length;
+    const flightsCount = trips.filter(t => t.mode === "avion").length;
     return {
-      countries: countrySet, cities: citySet, kmByMode, kmTotal, contCounts,
+      countries: countrySet, cities: citySet, kmByMode, kmTotal, contCounts, flightsCount,
       contsVisited, pctWorld: (countrySet.size / TOTAL_COUNTRIES) * 100,
     };
   }, [trips]);
@@ -165,17 +166,23 @@ export default function TravelLog({ session }) {
                 </span>
               </div>
               <h1 style={{ fontFamily: "'Bitter',serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
-              <div style={{ fontSize: 12, color: textDim, marginTop: 4 }}>{session.user.email}</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <button onClick={() => setDark(d => !d)} aria-label="Cambiar tema"
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
-                {dark ? <Sun size={15} /> : <Moon size={15} />}
-              </button>
-              <button onClick={() => supabase.auth.signOut()}
-                style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, padding: "8px 12px", cursor: "pointer", fontSize: 12 }}>
-                <LogOut size={14} /> Salir
-              </button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setDark(d => !d)} aria-label="Cambiar tema"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
+                  {dark ? <Sun size={15} /> : <Moon size={15} />}
+                </button>
+                <button onClick={() => supabase.auth.signOut()}
+                  style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, padding: "8px 12px", cursor: "pointer", fontSize: 12 }}>
+                  <LogOut size={14} /> Salir
+                </button>
+              </div>
+              <div style={{ fontSize: 12, color: textDim }}>{session.user.email}</div>
+              <a href="https://www.paypal.com/donate/?business=alexrvd82@gmail.com&currency_code=EUR" target="_blank" rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: brass, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
+                <Heart size={12} /> Apoya este proyecto
+              </a>
             </div>
           </div>
         </div>
@@ -256,7 +263,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Compartir resumen */}
-        <ShareCard trips={trips} />
+        <ShareCard trips={trips} theme={{ ink, inkPanel, inkLine, paper, brass, teal, textDim }} />
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
@@ -293,7 +300,13 @@ export default function TravelLog({ session }) {
           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>INSIGNIAS</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
             {BADGES.map(b => {
-              const value = b.type === "km" ? stats.kmTotal : stats.cities.size;
+              const value = {
+                km: stats.kmTotal,
+                cities: stats.cities.size,
+                countries: stats.countries.size,
+                continents: stats.contsVisited,
+                flights: stats.flightsCount,
+              }[b.type];
               const unlocked = value >= b.threshold;
               const pct = Math.min((value / b.threshold) * 100, 100);
               return (
@@ -356,7 +369,7 @@ export default function TravelLog({ session }) {
                 z: COUNTRIES.map(c => (stats.countries.has(c.name) ? 1 : 0)),
                 text: COUNTRIES.map(c => c.name),
                 hoverinfo: "text", showscale: false,
-                colorscale: [[0, inkLine], [1, brass]],
+                colorscale: [[0, inkLine], [1, "#5c3a12"]],
                 marker: { line: { color: ink, width: 0.5 } },
               }]}
               layout={{
