@@ -309,13 +309,14 @@ export default function TravelLog({ session }) {
               }[b.type];
               const unlocked = value >= b.threshold;
               const pct = Math.min((value / b.threshold) * 100, 100);
+              const barColor = dark ? brass : "#8b4513";
               return (
                 <div key={b.id} style={{ background: ink, borderRadius: 10, padding: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1px solid ${unlocked ? brass : inkLine}`, opacity: unlocked ? 1 : 0.6 }}>
                   {unlocked ? <Trophy size={20} color={brass} /> : <Lock size={16} color={textDim} />}
                   <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 12, fontWeight: 700 }}>{b.title}</div>
-                  <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{b.desc}</div>
+                  <div style={{ fontSize: 9, color: paper, fontFamily: "'IBM Plex Mono',monospace" }}>{b.desc}</div>
                   <div style={{ height: 4, width: "100%", background: inkLine, borderRadius: 2, overflow: "hidden", marginTop: 4 }}>
-                    <div style={{ height: 4, width: `${pct}%`, background: unlocked ? brass : teal }} />
+                    <div style={{ height: 4, width: `${pct}%`, background: barColor }} />
                   </div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>
                     {value.toLocaleString("es-ES")}/{b.threshold.toLocaleString("es-ES")}{b.type === "km" ? " km" : ""}

@@ -107,8 +107,8 @@ export default function ShareCard({ trips, theme, dark = true }) {
     const watermarkImg = await loadImage(dark ? "/logo-v4-paper.png" : "/logo-v4-ink.png");
     if (watermarkImg) {
       ctx.save();
-      ctx.globalAlpha = dark ? 0.10 : 0.08;
-      ctx.translate(W / 2, H * 0.42);
+      ctx.globalAlpha = dark ? 0.10 : 0.16;
+      ctx.translate(W / 2, H / 2);
       ctx.rotate((-8 * Math.PI) / 180);
       const wmW = W * 1.35, wmH = wmW * (watermarkImg.height / watermarkImg.width);
       ctx.drawImage(watermarkImg, -wmW / 2, -wmH / 2, wmW, wmH);
