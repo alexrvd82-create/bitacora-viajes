@@ -64,6 +64,10 @@ export default function ShareCard({ trips, theme, dark = true }) {
 
   async function generate() {
     setGenerating(true);
+    try {
+      await document.fonts.load('800 100px "Space Grotesk"');
+      await document.fonts.ready;
+    } catch (e) { /* si falla, sigue con la fuente por defecto */ }
     const C = CARD_THEMES[dark ? "dark" : "light"];
     const sortedTrips = [...filtered].sort((a, b) => (a.trip_date || "").localeCompare(b.trip_date || ""));
     const countrySet = new Set(), citySet = new Set();
@@ -99,31 +103,32 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, H);
 
+    // Marca de agua: el logo en grande, muy sutil, detrás de todo el contenido
+    const watermarkImg = await loadImage(dark ? "/logo-v4-paper.png" : "/logo-v4-ink.png");
+    if (watermarkImg) {
+      ctx.save();
+      ctx.globalAlpha = dark ? 0.10 : 0.08;
+      ctx.translate(W / 2, H * 0.42);
+      ctx.rotate((-8 * Math.PI) / 180);
+      const wmW = W * 1.35, wmH = wmW * (watermarkImg.height / watermarkImg.width);
+      ctx.drawImage(watermarkImg, -wmW / 2, -wmH / 2, wmW, wmH);
+      ctx.restore();
+    }
+
     // Marca de la app
     ctx.textAlign = "left";
     ctx.fillStyle = C.brass;
     ctx.font = "700 30px 'IBM Plex Mono', monospace";
     ctx.fillText("BITÁCORA DE VIAJES", 70, 100);
 
-    // Rango de fechas, tipografía grande moderna (ancho recortado para dejar sitio al sello)
+    // Rango de fechas, tipografía grande moderna
     ctx.fillStyle = C.paper;
     const rangeText = start && end
       ? `${fmtDate(start)} — ${fmtDate(end)}`
       : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : "Mi viaje";
-    const rangeSize = fitFontSize(ctx, rangeText, 560, 108, s => `800 ${s}px system-ui, -apple-system, sans-serif`);
-    ctx.font = `800 ${rangeSize}px system-ui, -apple-system, sans-serif`;
-    wrapLeftText(ctx, rangeText, 70, 250, 600, rangeSize * 1.15);
-
-    // Sello decorativo (logo), separado del texto de fecha
-    const logoImg = await loadImage("/logo-v4.png");
-    if (logoImg) {
-      ctx.save();
-      ctx.globalAlpha = dark ? 0.92 : 0.85;
-      ctx.translate(W - 165, 200);
-      ctx.rotate((-9 * Math.PI) / 180);
-      ctx.drawImage(logoImg, -140, -140, 280, 280);
-      ctx.restore();
-    }
+    const rangeSize = fitFontSize(ctx, rangeText, 900, 108, s => `800 ${s}px 'Space Grotesk', sans-serif`);
+    ctx.font = `800 ${rangeSize}px 'Space Grotesk', sans-serif`;
+    wrapLeftText(ctx, rangeText, 70, 250, 940, rangeSize * 1.15);
 
     // Línea acento
     ctx.strokeStyle = `rgba(${C.brassRGB},0.55)`;
@@ -136,8 +141,8 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.textAlign = "center";
     ctx.fillStyle = C.brass;
     const kmText = kmTotal.toLocaleString("es-ES");
-    const kmSize = fitFontSize(ctx, kmText, 940, 260, s => `800 ${s}px system-ui, -apple-system, sans-serif`);
-    ctx.font = `800 ${kmSize}px system-ui, -apple-system, sans-serif`;
+    const kmSize = fitFontSize(ctx, kmText, 940, 260, s => `800 ${s}px 'Space Grotesk', sans-serif`);
+    ctx.font = `800 ${kmSize}px 'Space Grotesk', sans-serif`;
     ctx.fillText(kmText, W / 2, y);
     ctx.fillStyle = C.textDim;
     ctx.font = "800 40px 'IBM Plex Mono', monospace";
@@ -162,8 +167,8 @@ export default function ShareCard({ trips, theme, dark = true }) {
       ctx.fillStyle = C.paper;
       ctx.fillText(MODE_ICONS[m], x + blockW / 2, y + 96);
       const modeKmText = kmByMode[m].toLocaleString("es-ES");
-      const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px system-ui, sans-serif`);
-      ctx.font = `800 ${modeKmSize}px system-ui, sans-serif`;
+      const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px 'Space Grotesk', sans-serif`);
+      ctx.font = `800 ${modeKmSize}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = C.brass;
       ctx.fillText(modeKmText, x + blockW / 2, y + 154);
       ctx.font = "800 25px 'IBM Plex Mono', monospace";
@@ -185,7 +190,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
       ctx.textAlign = "center";
       ctx.fillStyle = s.accent;
       roundRect(ctx, x - 16, y - 90, 32, 6, 3); ctx.fill();
-      ctx.font = "800 96px system-ui, sans-serif";
+      ctx.font = "800 96px 'Space Grotesk', sans-serif";
       ctx.fillStyle = C.paper;
       ctx.fillText(s.value, x, y);
       ctx.font = "800 29px 'IBM Plex Mono', monospace";
@@ -226,7 +231,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
     });
     if (countries.length > 5) {
       ctx.textAlign = "left";
-      ctx.font = "800 40px system-ui, sans-serif";
+      ctx.font = "800 40px 'Space Grotesk', sans-serif";
       ctx.fillStyle = C.brass;
       ctx.fillText(`+${countries.length - 5}`, fx + 14, y + 62);
     }
@@ -246,7 +251,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.font = "800 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
     ctx.fillText("HISTORIAL GLOBAL DE PAÍSES", W / 2, y + 48);
-    ctx.font = "800 96px system-ui, sans-serif";
+    ctx.font = "800 96px 'Space Grotesk', sans-serif";
     ctx.fillStyle = C.brass;
     ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
     ctx.font = "700 26px 'IBM Plex Mono', monospace";
@@ -256,10 +261,10 @@ export default function ShareCard({ trips, theme, dark = true }) {
 
     // Pie
     ctx.textAlign = "center";
-    ctx.font = "700 28px 'IBM Plex Mono', monospace";
+    ctx.font = "700 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 60);
-    ctx.font = "700 22px 'IBM Plex Mono', monospace";
+    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 68);
+    ctx.font = "800 34px 'Space Grotesk', sans-serif";
     ctx.fillStyle = C.brass;
     ctx.fillText("bitacora-viajes-arvd.vercel.app", W / 2, H - 28);
 

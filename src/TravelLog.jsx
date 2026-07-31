@@ -160,12 +160,12 @@ export default function TravelLog({ session }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <img src="/logo-v4.png" alt="" style={{ width: 34, height: 34, objectFit: "contain" }} />
+                <img src="/logo-v4.png" alt="" style={{ width: 56, height: 56, objectFit: "contain" }} />
                 <span className="mono" style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: textDim }}>
                   REGISTRO DE RUTAS · KM · COBERTURA MUNDIAL
                 </span>
               </div>
-              <h1 style={{ fontFamily: "'Bitter',serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
+              <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -277,7 +277,7 @@ export default function TravelLog({ session }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>KM POR MEDIO DE TRANSPORTE</span>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: textDim }}>
-              TOTAL <span style={{ fontFamily: "'Bitter',serif", fontSize: 16, fontWeight: 700, color: paper }}>{stats.kmTotal.toLocaleString("es-ES")}</span> km
+              TOTAL <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{stats.kmTotal.toLocaleString("es-ES")}</span> km
             </span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
@@ -286,7 +286,7 @@ export default function TravelLog({ session }) {
                 <div style={{ background: inkPanel, borderRadius: 999, padding: 6, display: "flex" }}><m.Icon size={14} color={brass} /></div>
                 <div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{m.label.toUpperCase()}</div>
-                  <div style={{ fontFamily: "'Bitter',serif", fontSize: 16, fontWeight: 700 }}>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700 }}>
                     {stats.kmByMode[m.id].toLocaleString("es-ES")} <span style={{ fontSize: 10, fontWeight: 400, color: textDim }}>km</span>
                   </div>
                 </div>
@@ -312,7 +312,7 @@ export default function TravelLog({ session }) {
               return (
                 <div key={b.id} style={{ background: ink, borderRadius: 10, padding: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1px solid ${unlocked ? brass : inkLine}`, opacity: unlocked ? 1 : 0.6 }}>
                   {unlocked ? <Trophy size={20} color={brass} /> : <Lock size={16} color={textDim} />}
-                  <div style={{ fontFamily: "'Bitter',serif", fontSize: 12, fontWeight: 700 }}>{b.title}</div>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 12, fontWeight: 700 }}>{b.title}</div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{b.desc}</div>
                   <div style={{ height: 4, width: "100%", background: inkLine, borderRadius: 2, overflow: "hidden", marginTop: 4 }}>
                     <div style={{ height: 4, width: `${pct}%`, background: unlocked ? brass : teal }} />
@@ -331,7 +331,7 @@ export default function TravelLog({ session }) {
           <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ width: 110, height: 110, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, ...gaugeStyle }}>
               <div style={{ width: 84, height: 84, borderRadius: 999, background: inkPanel, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ fontFamily: "'Bitter',serif", fontSize: 20, fontWeight: 700 }}>{stats.pctWorld.toFixed(1)}%</div>
+                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 20, fontWeight: 700 }}>{stats.pctWorld.toFixed(1)}%</div>
                 <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>MUNDO</div>
               </div>
             </div>
@@ -471,7 +471,7 @@ function StatBox({ theme, label, value, suffix, sub, subDim }) {
   return (
     <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 14 }}>
       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{label}</div>
-      <div style={{ fontFamily: "'Bitter',serif", fontSize: 22, fontWeight: 700, marginTop: 4 }}>
+      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 22, fontWeight: 700, marginTop: 4 }}>
         {value}{suffix && <span style={{ fontSize: 13, color: textDim, fontWeight: 400 }}>{suffix}</span>}
       </div>
       <div style={{ fontSize: 10, color: subDim ? textDim : brass, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>{sub}</div>

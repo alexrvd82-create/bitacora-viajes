@@ -25,7 +25,7 @@ export default function UpdatePassword({ onDone }) {
   return (
     <div style={{ minHeight: "100vh", background: ink, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter',sans-serif", color: paper }}>
       <div style={{ width: "100%", maxWidth: 360, background: panel, border: `1px solid ${line}`, borderRadius: 14, padding: 24 }}>
-        <div style={{ fontFamily: "'Bitter',serif", fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Nueva contraseña</div>
+        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Nueva contraseña</div>
         <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: "#94a3c4", marginBottom: 20 }}>ELIGE UNA CONTRASEÑA NUEVA</div>
         <form onSubmit={handleSubmit}>
           <label style={{ fontSize: 11, color: "#94a3c4", display: "block", marginBottom: 4 }}>Contraseña nueva</label>
