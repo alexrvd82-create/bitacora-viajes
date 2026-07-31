@@ -179,7 +179,7 @@ export default function TravelLog({ session }) {
                 </button>
               </div>
               <div style={{ fontSize: 12, color: textDim }}>{session.user.email}</div>
-              <a href="https://www.paypal.com/donate/?business=alexrvd82@gmail.com&currency_code=EUR" target="_blank" rel="noopener noreferrer"
+              <a href="https://paypal.me/proyectovb6" target="_blank" rel="noopener noreferrer"
                 style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, padding: "7px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
                 <Coffee size={14} /> Invítame a un café
               </a>
@@ -369,7 +369,7 @@ export default function TravelLog({ session }) {
                 z: COUNTRIES.map(c => (stats.countries.has(c.name) ? 1 : 0)),
                 text: COUNTRIES.map(c => c.name),
                 hoverinfo: "text", showscale: false,
-                colorscale: [[0, inkLine], [1, "#5c3a12"]],
+                colorscale: [[0, inkLine], [1, "#8a5c14"]],
                 marker: { line: { color: ink, width: 0.5 } },
               }]}
               layout={{

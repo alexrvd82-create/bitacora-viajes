@@ -119,9 +119,9 @@ export default function ShareCard({ trips, theme, dark = true }) {
     if (logoImg) {
       ctx.save();
       ctx.globalAlpha = dark ? 0.92 : 0.85;
-      ctx.translate(W - 155, 195);
+      ctx.translate(W - 165, 200);
       ctx.rotate((-9 * Math.PI) / 180);
-      ctx.drawImage(logoImg, -105, -105, 210, 210);
+      ctx.drawImage(logoImg, -140, -140, 280, 280);
       ctx.restore();
     }
 
@@ -245,7 +245,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.textAlign = "center";
     ctx.font = "800 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText("DESDE QUE EMPECÉ A VIAJAR", W / 2, y + 48);
+    ctx.fillText("HISTORIAL GLOBAL DE PAÍSES", W / 2, y + 48);
     ctx.font = "800 96px system-ui, sans-serif";
     ctx.fillStyle = C.brass;
     ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
