@@ -34,7 +34,6 @@ export default function TravelLog({ session }) {
   const [date, setDate] = useState("");
   const [roundTrip, setRoundTrip] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [recalcId, setRecalcId] = useState(null);
   const [suggestions, setSuggestions] = useState({}); // { [stopIndex]: [{name, admin1, country, country_code, lat, lon}] }
   const [openSuggestIndex, setOpenSuggestIndex] = useState(null);
   const debounceRef = useRef({});
@@ -108,15 +107,6 @@ export default function TravelLog({ session }) {
     setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "", lat: undefined, lon: undefined }))));
     setDate("");
     setSaving(false);
-  }
-
-  async function recalcTrip(t) {
-    setRecalcId(t.id);
-    const resolvedStops = await Promise.all(t.stops.map(s => resolveStopCoords({ country: s.country, city: s.city })));
-    const km = await computeTripKm(t.mode, resolvedStops);
-    const { data, error } = await supabase.from("trips").update({ stops: resolvedStops, km }).eq("id", t.id).select().single();
-    if (!error && data) setTrips(prev => prev.map(x => (x.id === t.id ? data : x)));
-    setRecalcId(null);
   }
 
   async function removeTrip(id) {
@@ -347,7 +337,7 @@ export default function TravelLog({ session }) {
                       <span>{c.label}</span><span>{visited}/{total} · {pct.toFixed(0)}%</span>
                     </div>
                     <div style={{ height: 6, borderRadius: 3, background: inkLine, overflow: "hidden" }}>
-                      <div style={{ height: 6, width: `${pct}%`, background: visited > 0 ? (dark ? teal : brass) : inkLine }} />
+                      <div style={{ height: 6, width: `${pct}%`, background: visited > 0 ? brass : inkLine }} />
                     </div>
                   </div>
                 );
@@ -358,9 +348,8 @@ export default function TravelLog({ session }) {
 
         {/* Mapa mundial */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+          <div style={{ marginBottom: 12 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>MAPA MUNDIAL</span>
-            <span style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>rueda / pellizco para ampliar</span>
           </div>
           <div style={{ borderRadius: 10, overflow: "hidden" }}>
             <Plot
@@ -436,20 +425,13 @@ export default function TravelLog({ session }) {
                         <MapPin size={11} color={textDim} />
                         {t.stops.map((s, i) => (
                           <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            {i > 0 && <span style={{ color: brass }}>→</span>}
+                            {i > 0 && <span style={{ color: brass }}>{t.round_trip ? "↔" : "→"}</span>}
                             <span>{s.city}, {s.country}</span>
                           </span>
                         ))}
-                        {t.round_trip && (
-                          <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, border: `1px solid ${teal}`, color: teal, fontFamily: "'IBM Plex Mono',monospace" }}>IDA Y VUELTA</span>
-                        )}
                       </div>
                       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
                         {t.trip_date || "sin fecha"}{km != null ? ` · ${km.toLocaleString("es-ES")} km` : ""}
-                        <button onClick={() => recalcTrip(t)} disabled={recalcId === t.id}
-                          style={{ marginLeft: 8, background: "none", border: "none", color: brass, cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", textDecoration: "underline", padding: 0 }}>
-                          {recalcId === t.id ? "recalculando..." : "⟳ recalcular"}
-                        </button>
                       </div>
                     </div>
                     <button onClick={() => removeTrip(t.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>

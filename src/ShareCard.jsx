@@ -10,21 +10,20 @@ const CARD_THEMES = {
     bgStops: ["#0a1526", "#132038", "#1a2a4a"],
     brassRGB: "193,145,63", tealRGB: "95,212,196",
     ink: "#0c1729", inkLine: "#2b3c5c",
-    paper: "#efe6d2", brass: "#c1913f", textDim: "#c7d0e6",
+    paper: "#efe6d2", brass: "#c1913f", textDim: "#eef1f8",
     blockOverlay: ["rgba(255,255,255,0.07)", "rgba(255,255,255,0.02)"],
   },
   light: {
     bgStops: ["#fbf4e5", "#f3e7cd", "#ecdca8"],
     brassRGB: "138,90,30", tealRGB: "13,110,99",
     ink: "#f6efe0", inkLine: "#c9b280",
-    paper: "#241a08", brass: "#8a5a1e", textDim: "#5c4d30",
+    paper: "#161108", brass: "#6b3f10", textDim: "#161108",
     blockOverlay: ["rgba(255,255,255,0.55)", "rgba(255,255,255,0.25)"],
   },
 };
 // (colores usados solo por el panel de controles de la web, no por la imagen generada)
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
 
-const MODE_ICONS = { avion: "✈", coche: "🚗", tren: "🚂", barco: "⛴" };
 const MODE_LABELS = { avion: "AVIÓN", coche: "COCHE", tren: "TREN", barco: "BARCO" };
 
 function loadImage(src) {
@@ -45,6 +44,53 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+/* Iconos sencillos dibujados a mano, mismo estilo de línea para los 4 medios (no dependen de la fuente de emoji del sistema) */
+function drawModeIcon(ctx, mode, cx, cy, size, color) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  const s = size / 100;
+  ctx.scale(s, s);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 6;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  if (mode === "avion") {
+    ctx.moveTo(-42, 6);
+    ctx.lineTo(38, -22);
+    ctx.lineTo(10, 4);
+    ctx.lineTo(18, 34);
+    ctx.lineTo(2, 16);
+    ctx.lineTo(-14, 24);
+    ctx.lineTo(-8, 4);
+    ctx.closePath();
+    ctx.fill();
+  } else if (mode === "coche") {
+    roundRect(ctx, -44, -6, 88, 28, 10); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-24, -6); ctx.lineTo(-14, -26); ctx.lineTo(18, -26); ctx.lineTo(28, -6);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(-20, 24, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(20, 24, 11, 0, Math.PI * 2); ctx.fill();
+  } else if (mode === "tren") {
+    roundRect(ctx, -44, -28, 88, 46, 12); ctx.fill();
+    ctx.globalCompositeOperation = "destination-out";
+    roundRect(ctx, -32, -20, 22, 16, 4); ctx.fill();
+    roundRect(ctx, -4, -20, 22, 16, 4); ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.beginPath(); ctx.arc(-20, 24, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(20, 24, 11, 0, Math.PI * 2); ctx.fill();
+  } else if (mode === "barco") {
+    ctx.moveTo(-40, 18); ctx.lineTo(40, 18); ctx.lineTo(24, 34); ctx.lineTo(-24, 34);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-2, 18); ctx.lineTo(-2, -34); ctx.lineTo(28, 12);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
 }
 
 export default function ShareCard({ trips, theme, dark = true }) {
@@ -163,9 +209,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
       ctx.strokeStyle = `rgba(${C.brassRGB},0.35)`; ctx.lineWidth = 2;
       roundRect(ctx, x, y, blockW, blockH, 22); ctx.stroke();
       ctx.textAlign = "center";
-      ctx.font = "84px sans-serif";
-      ctx.fillStyle = C.paper;
-      ctx.fillText(MODE_ICONS[m], x + blockW / 2, y + 96);
+      drawModeIcon(ctx, m, x + blockW / 2, y + 68, 76, C.paper);
       const modeKmText = kmByMode[m].toLocaleString("es-ES");
       const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px 'Space Grotesk', sans-serif`);
       ctx.font = `800 ${modeKmSize}px 'Space Grotesk', sans-serif`;
@@ -237,16 +281,8 @@ export default function ShareCard({ trips, theme, dark = true }) {
     }
     y += flagH + 60;
 
-    // Historial global — mismo tratamiento visual que las demás tarjetas, para que se sienta parte del set
+    // Historial global — sin caja propia, flota igual que el resto de la tarjeta
     const covH = 190;
-    const covGrad2 = ctx.createLinearGradient(80, y, 80, y + covH);
-    covGrad2.addColorStop(0, C.blockOverlay[0]);
-    covGrad2.addColorStop(1, C.blockOverlay[1]);
-    ctx.fillStyle = covGrad2;
-    roundRect(ctx, 80, y, W - 160, covH, 22); ctx.fill();
-    ctx.strokeStyle = `rgba(${C.brassRGB},0.35)`; ctx.lineWidth = 2;
-    roundRect(ctx, 80, y, W - 160, covH, 22); ctx.stroke();
-
     ctx.textAlign = "center";
     ctx.font = "800 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
@@ -263,10 +299,13 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.textAlign = "center";
     ctx.font = "700 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 68);
-    ctx.font = "800 34px 'Space Grotesk', sans-serif";
-    ctx.fillStyle = C.brass;
-    ctx.fillText("bitacora-viajes-arvd.vercel.app", W / 2, H - 28);
+    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 76);
+    const urlColor = dark ? "#ffc857" : "#a0431e";
+    const urlText = "https://bitacora-viajes-arvd.vercel.app";
+    const urlSize = fitFontSize(ctx, urlText, W - 100, 40, s => `800 ${s}px 'Space Grotesk', sans-serif`);
+    ctx.font = `800 ${urlSize}px 'Space Grotesk', sans-serif`;
+    ctx.fillStyle = urlColor;
+    ctx.fillText(urlText, W / 2, H - 30);
 
     setImgUrl(canvas.toDataURL("image/png"));
     setGenerating(false);
