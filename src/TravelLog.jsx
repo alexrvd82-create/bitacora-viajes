@@ -16,8 +16,8 @@ const MODES = [
 ];
 
 const THEMES = {
-  dark: { ink: "#0a0f1e", inkPanel: "#141b30", inkLine: "#2a3654", paper: "#efe6d2", brass: "#c1913f", teal: "#4fd1c5", rust: "#e5484d", textDim: "#94a3c4" },
-  light: { ink: "#f6efe0", inkPanel: "#ecdfc0", inkLine: "#c9b280", paper: "#231a08", brass: "#8a5a1e", teal: "#0d6e63", rust: "#a52a2a", textDim: "#5c4d30" },
+  dark: { ink: "#0a0f1e", inkPanel: "#141b30", inkLine: "#2a3654", paper: "#efe6d2", brass: "#e8b23d", teal: "#4fd1c5", rust: "#e5484d", textDim: "#f2f0e8" },
+  light: { ink: "#f6efe0", inkPanel: "#ecdfc0", inkLine: "#c9b280", paper: "#161108", brass: "#6b3f10", teal: "#0d6e63", rust: "#a52a2a", textDim: "#161108" },
 };
 
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
@@ -347,7 +347,7 @@ export default function TravelLog({ session }) {
                       <span>{c.label}</span><span>{visited}/{total} · {pct.toFixed(0)}%</span>
                     </div>
                     <div style={{ height: 6, borderRadius: 3, background: inkLine, overflow: "hidden" }}>
-                      <div style={{ height: 6, width: `${pct}%`, background: visited > 0 ? teal : inkLine }} />
+                      <div style={{ height: 6, width: `${pct}%`, background: visited > 0 ? (dark ? teal : brass) : inkLine }} />
                     </div>
                   </div>
                 );
@@ -388,9 +388,8 @@ export default function TravelLog({ session }) {
 
         {/* Banderas */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+          <div style={{ marginBottom: 8 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>PAÍSES DEL MUNDO</span>
-            <span style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>en color = visitado</span>
           </div>
           {CONTINENTS.map(c => (
             <div key={c.code} style={{ marginBottom: 14 }}>

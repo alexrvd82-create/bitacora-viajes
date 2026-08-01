@@ -24,7 +24,7 @@ const CARD_THEMES = {
 // (colores usados solo por el panel de controles de la web, no por la imagen generada)
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
 
-const MODE_ICONS = { avion: "✈", coche: "🚗", tren: "🚆", barco: "⛴" };
+const MODE_ICONS = { avion: "✈", coche: "🚗", tren: "🚂", barco: "⛴" };
 const MODE_LABELS = { avion: "AVIÓN", coche: "COCHE", tren: "TREN", barco: "BARCO" };
 
 function loadImage(src) {
@@ -107,7 +107,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
     const watermarkImg = await loadImage(dark ? "/logo-v4-paper.png" : "/logo-v4-ink.png");
     if (watermarkImg) {
       ctx.save();
-      ctx.globalAlpha = dark ? 0.10 : 0.16;
+      ctx.globalAlpha = dark ? 0.14 : 0.20;
       ctx.translate(W / 2, H / 2);
       ctx.rotate((-8 * Math.PI) / 180);
       const wmW = W * 1.35, wmH = wmW * (watermarkImg.height / watermarkImg.width);
@@ -237,15 +237,15 @@ export default function ShareCard({ trips, theme, dark = true }) {
     }
     y += flagH + 60;
 
-    // Cobertura mundial de toda la vida — bloque destacado, debajo de las banderas del periodo
+    // Historial global — mismo tratamiento visual que las demás tarjetas, para que se sienta parte del set
     const covH = 190;
-    const covGrad = ctx.createLinearGradient(80, y, W - 80, y);
-    covGrad.addColorStop(0, `rgba(${C.brassRGB},0.16)`);
-    covGrad.addColorStop(1, `rgba(${C.tealRGB},0.12)`);
-    ctx.fillStyle = covGrad;
-    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.fill();
-    ctx.strokeStyle = `rgba(${C.brassRGB},0.4)`; ctx.lineWidth = 2;
-    roundRect(ctx, 80, y, W - 160, covH, 26); ctx.stroke();
+    const covGrad2 = ctx.createLinearGradient(80, y, 80, y + covH);
+    covGrad2.addColorStop(0, C.blockOverlay[0]);
+    covGrad2.addColorStop(1, C.blockOverlay[1]);
+    ctx.fillStyle = covGrad2;
+    roundRect(ctx, 80, y, W - 160, covH, 22); ctx.fill();
+    ctx.strokeStyle = `rgba(${C.brassRGB},0.35)`; ctx.lineWidth = 2;
+    roundRect(ctx, 80, y, W - 160, covH, 22); ctx.stroke();
 
     ctx.textAlign = "center";
     ctx.font = "800 26px 'IBM Plex Mono', monospace";
@@ -356,7 +356,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
             <button onClick={download} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: "none", border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, cursor: "pointer", fontSize: 13 }}>
               <Download size={14} /> Descargar
             </button>
-            <button onClick={share} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: ui.teal, border: "none", color: ui.ink === "#efe6d2" ? "#efe6d2" : "#fff", borderRadius: 10, cursor: "pointer", fontSize: 13 }}>
+            <button onClick={share} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: ui.brass, border: "none", color: ui.ink, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
               <Share2 size={14} /> Compartir
             </button>
           </div>
