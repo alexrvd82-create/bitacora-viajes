@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
-import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown } from "lucide-react";
+import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import LanguageSwitcher from "./i18n/LanguageSwitcher.jsx";
 import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
-  BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
+  flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
 } from "./data.js";
 
 const THEMES = {
@@ -18,14 +18,22 @@ const THEMES = {
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
 
 const CONTINENT_KEY = { EU: "europe", AS: "asia", AF: "africa", NA: "northAmerica", SA: "southAmerica", OC: "oceania" };
-const BADGE_KEY = {
-  km100k: ["badgeKm100k", "badgeKm100kDesc"],
-  km500k: ["badgeKm500k", "badgeKm500kDesc"],
-  cities10: ["badgeCities10", "badgeCities10Desc"],
-  countries10: ["badgeCountries10", "badgeCountries10Desc"],
-  continents6: ["badgeContinents6", "badgeContinents6Desc"],
-  flights5: ["badgeFlights5", "badgeFlights5Desc"],
-};
+
+const TIERS = ["#c07830", "#b7bec9", "#e8b23d", "#4fd1c5"]; // bronze, silver, gold, diamond
+
+// Badge "families": each defines how to compute value, the icon, and the thresholds (tiers).
+const BADGE_FAMILIES = [
+  { id: "cities", icon: Building2, statKey: "citiesCount", thresholds: [10, 25, 50, 100], unit: "", titleKey: "cities", descKey: "badgeDescCities" },
+  { id: "countries", icon: Flag, statKey: "countriesCount", thresholds: [10, 25, 50, 100], unit: "", titleKey: "countries", descKey: "badgeDescCountries" },
+  { id: "continents", icon: Globe2, statKey: "contsVisited", thresholds: [3, 6], unit: "/6", titleKey: "continents", descKey: "badgeDescContinents" },
+  { id: "kmTotal", icon: Route, statKey: "kmTotal", thresholds: [10000, 50000, 100000, 500000, 1000000], unit: "km", isKm: true, descKey: "badgeDescKmTotal" },
+  { id: "kmPlane", icon: Plane, statKey: "kmPlane", thresholds: [10000, 50000, 100000], unit: "km", isKm: true, modeLabelKey: "modePlane", descKey: "badgeDescKmMode" },
+  { id: "kmCar", icon: Car, statKey: "kmCar", thresholds: [10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeCar", descKey: "badgeDescKmMode" },
+  { id: "kmTrain", icon: TrainFront, statKey: "kmTrain", thresholds: [10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeTrain", descKey: "badgeDescKmMode" },
+  { id: "kmBoat", icon: Ship, statKey: "kmBoat", thresholds: [1000, 5000], unit: "km", isKm: true, modeLabelKey: "modeBoat", descKey: "badgeDescKmMode" },
+  { id: "flights", icon: PlaneTakeoff, statKey: "flightsCount", thresholds: [5, 10, 25, 50], unit: "", labelKey: "badgeFlightsLabel", descKey: "badgeDescFlights" },
+  { id: "trips", icon: Trophy, statKey: "tripsCount", thresholds: [10, 25, 50, 100], unit: "", labelKey: "badgeTripsLabel", descKey: "badgeDescTrips" },
+];
 
 export default function TravelLog({ session }) {
   const { t, locale } = useLanguage();
@@ -153,6 +161,8 @@ export default function TravelLog({ session }) {
     return {
       countries: countrySet, cities: citySet, kmByMode, kmTotal, contCounts, flightsCount,
       contsVisited, pctWorld: (countrySet.size / TOTAL_COUNTRIES) * 100,
+      citiesCount: citySet.size, countriesCount: countrySet.size, tripsCount: trips.length,
+      kmPlane: kmByMode.avion, kmCar: kmByMode.coche, kmTrain: kmByMode.tren, kmBoat: kmByMode.barco,
     };
   }, [trips]);
 
@@ -304,34 +314,45 @@ export default function TravelLog({ session }) {
 
         {/* Insignias */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>{t("badges")}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
-            {BADGES.map(b => {
-              const value = {
-                km: stats.kmTotal,
-                cities: stats.cities.size,
-                countries: stats.countries.size,
-                continents: stats.contsVisited,
-                flights: stats.flightsCount,
-              }[b.type];
-              const unlocked = value >= b.threshold;
-              const pct = Math.min((value / b.threshold) * 100, 100);
-              const barColor = dark ? brass : "#8b4513";
-              const [titleKey, descKey] = BADGE_KEY[b.id] || [];
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("badges")}</span>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: textDim }}>
+              {(() => {
+                const all = BADGE_FAMILIES.flatMap(f => f.thresholds);
+                const unlockedCount = BADGE_FAMILIES.reduce((sum, f) => sum + f.thresholds.filter(th => stats[f.statKey] >= th).length, 0);
+                return `${unlockedCount}/${all.length}`;
+              })()}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "flex-start" }}>
+            {BADGE_FAMILIES.map(fam => fam.thresholds.map((threshold, tierIdx) => {
+              const value = stats[fam.statKey] || 0;
+              const unlocked = value >= threshold;
+              const tierColor = TIERS[Math.min(tierIdx, TIERS.length - 1)];
+              const Icon = fam.icon;
+              const label = fam.isKm
+                ? `${threshold.toLocaleString(locale)} km`
+                : fam.titleKey
+                  ? `${threshold} ${t(fam.titleKey).toLowerCase()}`
+                  : `${threshold} ${t(fam.labelKey)}`;
+              const sub = fam.modeLabelKey ? t(fam.modeLabelKey) : (fam.descKey ? t(fam.descKey) : "");
               return (
-                <div key={b.id} style={{ background: ink, borderRadius: 10, padding: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1px solid ${unlocked ? brass : inkLine}`, opacity: unlocked ? 1 : 0.6 }}>
-                  {unlocked ? <Trophy size={20} color={brass} /> : <Lock size={16} color={textDim} />}
-                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 12, fontWeight: 700 }}>{titleKey ? t(titleKey) : b.title}</div>
-                  <div style={{ fontSize: 9, color: paper, fontFamily: "'IBM Plex Mono',monospace" }}>{descKey ? t(descKey) : b.desc}</div>
-                  <div style={{ height: 4, width: "100%", background: inkLine, borderRadius: 2, overflow: "hidden", marginTop: 4 }}>
-                    <div style={{ height: 4, width: `${pct}%`, background: barColor }} />
+                <div key={`${fam.id}-${threshold}`} title={`${label}${sub ? " · " + sub : ""}`}
+                  style={{ width: 64, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: unlocked ? 1 : 0.45 }}>
+                  <div style={{
+                    width: 46, height: 46, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                    background: unlocked ? `linear-gradient(145deg, ${tierColor}33, ${tierColor}11)` : ink,
+                    border: `2px solid ${unlocked ? tierColor : inkLine}`,
+                    boxShadow: unlocked ? `0 0 0 3px ${tierColor}22` : "none",
+                  }}>
+                    {unlocked ? <Icon size={19} color={tierColor} /> : <Lock size={14} color={textDim} />}
                   </div>
-                  <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>
-                    {value.toLocaleString(locale)}/{b.threshold.toLocaleString(locale)}{b.type === "km" ? " km" : ""}
+                  <div style={{ fontSize: 8, textAlign: "center", lineHeight: 1.15, fontFamily: "'IBM Plex Mono',monospace", color: unlocked ? paper : textDim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
+                    {label}
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         </div>
 
