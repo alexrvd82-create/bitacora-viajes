@@ -155,6 +155,7 @@ export const translations = {
     badgeDescFlights: "Flights logged",
     badgeTripsLabel: "trips",
     badgeDescTrips: "Trips logged",
+    mapLoadError: "Map couldn't load on this device",
     language: "Language",
   },
 
@@ -284,6 +285,7 @@ export const translations = {
     badgeDescFlights: "Vuelos registrados",
     badgeTripsLabel: "viajes",
     badgeDescTrips: "Viajes registrados",
+    mapLoadError: "El mapa no se pudo cargar en este dispositivo",
     language: "Idioma",
   },
 
@@ -413,6 +415,7 @@ export const translations = {
     badgeDescFlights: "Vols enregistrés",
     badgeTripsLabel: "voyages",
     badgeDescTrips: "Voyages enregistrés",
+    mapLoadError: "La carte n'a pas pu se charger sur cet appareil",
     language: "Langue",
   },
 
@@ -542,6 +545,7 @@ export const translations = {
     badgeDescFlights: "Gespeicherte Flüge",
     badgeTripsLabel: "Reisen",
     badgeDescTrips: "Gespeicherte Reisen",
+    mapLoadError: "Karte konnte auf diesem Gerät nicht geladen werden",
     language: "Sprache",
   },
 
@@ -671,6 +675,7 @@ export const translations = {
     badgeDescFlights: "Voos registados",
     badgeTripsLabel: "viagens",
     badgeDescTrips: "Viagens registadas",
+    mapLoadError: "O mapa não pôde ser carregado neste dispositivo",
     language: "Idioma",
   },
 
@@ -800,6 +805,7 @@ export const translations = {
     badgeDescFlights: "Voli registrati",
     badgeTripsLabel: "viaggi",
     badgeDescTrips: "Viaggi registrati",
+    mapLoadError: "La mappa non è stata caricata su questo dispositivo",
     language: "Lingua",
   },
 
@@ -929,6 +935,7 @@ export const translations = {
     badgeDescFlights: "已记录航班",
     badgeTripsLabel: "次旅行",
     badgeDescTrips: "已记录旅行",
+    mapLoadError: "此设备无法加载地图",
     language: "语言",
   },
 
@@ -1058,6 +1065,7 @@ export const translations = {
     badgeDescFlights: "記録済みのフライト",
     badgeTripsLabel: "回の旅行",
     badgeDescTrips: "記録済みの旅行",
+    mapLoadError: "この端末では地図を読み込めませんでした",
     language: "言語",
   },
 
@@ -1187,6 +1195,7 @@ export const translations = {
     badgeDescFlights: "दर्ज उड़ानें",
     badgeTripsLabel: "यात्राएं",
     badgeDescTrips: "दर्ज यात्राएं",
+    mapLoadError: "इस डिवाइस पर मानचित्र लोड नहीं हो सका",
     language: "भाषा",
   },
 
@@ -1316,6 +1325,7 @@ export const translations = {
     badgeDescFlights: "رحلات طيران مسجلة",
     badgeTripsLabel: "رحلات",
     badgeDescTrips: "رحلات مسجلة",
+    mapLoadError: "تعذّر تحميل الخريطة على هذا الجهاز",
     language: "اللغة",
   },
 
@@ -1445,6 +1455,7 @@ export const translations = {
     badgeDescFlights: "Записанных перелётов",
     badgeTripsLabel: "поездок",
     badgeDescTrips: "Записанных поездок",
+    mapLoadError: "Не удалось загрузить карту на этом устройстве",
     language: "Язык",
   },
 
@@ -1574,6 +1585,7 @@ export const translations = {
     badgeDescFlights: "기록된 비행",
     badgeTripsLabel: "회 여행",
     badgeDescTrips: "기록된 여행",
+    mapLoadError: "이 기기에서는 지도를 불러올 수 없습니다",
     language: "언어",
   },
 };

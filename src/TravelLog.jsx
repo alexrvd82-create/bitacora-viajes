@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import Plot from "react-plotly.js";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense, Component } from "react";
 import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
@@ -9,6 +8,20 @@ import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
   flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
 } from "./data.js";
+
+const Plot = lazy(() => import("react-plotly.js"));
+
+// Aísla el mapa mundial (Plotly) del resto de la app: si falla al cargar o
+// renderizar en un dispositivo con pocos recursos, no rompe el resto de la página.
+class MapErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error) { console.error("World map failed to render:", error); }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
 
 const THEMES = {
   dark: { ink: "#0a0f1e", inkPanel: "#141b30", inkLine: "#2a3654", paper: "#efe6d2", brass: "#e8b23d", teal: "#4fd1c5", rust: "#e5484d", textDim: "#f2f0e8" },
@@ -391,26 +404,34 @@ export default function TravelLog({ session }) {
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("worldMap")}</span>
           </div>
           <div style={{ borderRadius: 10, overflow: "hidden" }}>
-            <Plot
-              data={[{
-                type: "choropleth", locationmode: "ISO-3",
-                locations: COUNTRIES.map(c => c.iso3),
-                z: COUNTRIES.map(c => (stats.countries.has(c.name) ? 1 : 0)),
-                text: COUNTRIES.map(c => c.name),
-                hoverinfo: "text", showscale: false,
-                colorscale: [[0, inkLine], [1, "#8a5c14"]],
-                marker: { line: { color: ink, width: 0.5 } },
-              }]}
-              layout={{
-                geo: { projection: { type: "natural earth" }, showframe: false, showcoastlines: false, showocean: true, oceancolor: ink, landcolor: inkLine, bgcolor: "transparent" },
-                paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-                margin: { t: 10, b: 10, l: 0, r: 0 }, height: 420,
-                font: { color: paper, family: "IBM Plex Mono, monospace", size: 10 },
-              }}
-              config={{ scrollZoom: true, displayModeBar: true, displaylogo: false, responsive: true }}
-              useResizeHandler
-              style={{ width: "100%", height: "420px" }}
-            />
+            <MapErrorBoundary fallback={
+              <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: textDim, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace", textAlign: "center", padding: 20 }}>
+                {t("mapLoadError")}
+              </div>
+            }>
+              <Suspense fallback={<div style={{ height: 420, display: "flex", alignItems: "center", justifyContent: "center", color: textDim, fontSize: 12 }}>…</div>}>
+                <Plot
+                  data={[{
+                    type: "choropleth", locationmode: "ISO-3",
+                    locations: COUNTRIES.map(c => c.iso3),
+                    z: COUNTRIES.map(c => (stats.countries.has(c.name) ? 1 : 0)),
+                    text: COUNTRIES.map(c => c.name),
+                    hoverinfo: "text", showscale: false,
+                    colorscale: [[0, inkLine], [1, "#8a5c14"]],
+                    marker: { line: { color: ink, width: 0.5 } },
+                  }]}
+                  layout={{
+                    geo: { projection: { type: "natural earth" }, showframe: false, showcoastlines: false, showocean: true, oceancolor: ink, landcolor: inkLine, bgcolor: "transparent" },
+                    paper_bgcolor: "transparent", plot_bgcolor: "transparent",
+                    margin: { t: 10, b: 10, l: 0, r: 0 }, height: 420,
+                    font: { color: paper, family: "IBM Plex Mono, monospace", size: 10 },
+                  }}
+                  config={{ scrollZoom: true, displayModeBar: true, displaylogo: false, responsive: true }}
+                  useResizeHandler
+                  style={{ width: "100%", height: "420px" }}
+                />
+              </Suspense>
+            </MapErrorBoundary>
           </div>
         </div>
 

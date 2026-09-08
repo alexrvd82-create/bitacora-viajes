@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "./supabaseClient";
 import Landing from "./Landing.jsx";
 import Auth from "./Auth.jsx";
 import UpdatePassword from "./UpdatePassword.jsx";
-import TravelLog from "./TravelLog.jsx";
+
+const TravelLog = lazy(() => import("./TravelLog.jsx"));
+
+function LoadingScreen() {
+  return <div style={{ minHeight: "100vh", background: "#0a0f1e" }} />;
+}
 
 export default function App() {
   const [session, setSession] = useState(undefined); // undefined = cargando, null = sin sesión
@@ -20,7 +25,7 @@ export default function App() {
   }, []);
 
   if (session === undefined) {
-    return <div style={{ minHeight: "100vh", background: "#0a0f1e" }} />;
+    return <LoadingScreen />;
   }
   if (recovery) {
     return <UpdatePassword onDone={() => setRecovery(false)} />;
@@ -31,5 +36,9 @@ export default function App() {
     }
     return <Auth initialMode={view === "signup" ? "signup" : "login"} onBack={() => setView("landing")} />;
   }
-  return <TravelLog session={session} />;
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <TravelLog session={session} />
+    </Suspense>
+  );
 }
