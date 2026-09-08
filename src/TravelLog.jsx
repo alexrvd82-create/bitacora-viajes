@@ -40,6 +40,8 @@ export default function TravelLog({ session }) {
   const { ink, inkPanel, inkLine, paper, brass, teal, rust, textDim } = THEMES[dark ? "dark" : "light"];
   const [expandedConts, setExpandedConts] = useState({});
   function toggleCont(code) { setExpandedConts(p => ({ ...p, [code]: !p[code] })); }
+  const [expandedRouteConts, setExpandedRouteConts] = useState({});
+  function toggleRouteCont(code) { setExpandedRouteConts(p => ({ ...p, [code]: !p[code] })); }
 
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -472,32 +474,77 @@ export default function TravelLog({ session }) {
             </div>
           ) : (
             <div>
-              {trips.map(trip => {
-                const M = MODES.find(m => m.id === trip.mode);
-                const km = tripKm(trip);
-                return (
-                  <div key={trip.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                    <div style={{ background: ink, borderRadius: 999, padding: 8, display: "flex", flexShrink: 0 }}><M.Icon size={15} color={brass} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-                        <MapPin size={11} color={textDim} />
-                        {trip.stops.map((s, i) => (
-                          <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            {i > 0 && <span style={{ color: brass }}>{trip.round_trip ? "↔" : "→"}</span>}
-                            <span>{s.city}, {s.country}</span>
+              {(() => {
+                const groups = {};
+                for (const trip of trips) {
+                  const originCountry = COUNTRY_MAP[trip.stops[0]?.country];
+                  const code = originCountry?.cont || "OTHER";
+                  (groups[code] = groups[code] || []).push(trip);
+                }
+                const orderedCodes = [...CONTINENTS.map(c => c.code), "OTHER"].filter(code => groups[code]?.length);
+                return orderedCodes.map(code => {
+                  const contTrips = groups[code];
+                  const isOpen = !!expandedRouteConts[code];
+                  const totalKm = contTrips.reduce((sum, trip) => sum + (tripKm(trip) || 0), 0);
+                  const previewModes = [...new Set(contTrips.map(tr => tr.mode))].slice(0, 4).map(id => MODES.find(m => m.id === id)).filter(Boolean);
+                  return (
+                    <div key={code} style={{ marginBottom: 10, borderBottom: `1px solid ${inkLine}`, paddingBottom: 10 }}>
+                      <button onClick={() => toggleRouteCont(code)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: "4px 0", color: "inherit" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 11, color: textDim, fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.05em" }}>
+                            {code === "OTHER" ? t("world").toUpperCase() : t(CONTINENT_KEY[code] || code).toUpperCase()}
                           </span>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
-                        {trip.trip_date || t("noDate")}{km != null ? ` · ${km.toLocaleString(locale)} km` : ""}
-                      </div>
+                          <span style={{ fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", color: brass, fontWeight: 700 }}>
+                            {contTrips.length}
+                          </span>
+                          {!isOpen && (
+                            <div style={{ display: "flex", gap: 4, marginLeft: 2 }}>
+                              {previewModes.map(m => (
+                                <div key={m.id} style={{ background: ink, borderRadius: 999, padding: 5, display: "flex" }}><m.Icon size={11} color={brass} /></div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 11, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{totalKm.toLocaleString(locale)} km</span>
+                          <ChevronDown size={14} color={textDim} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }} />
+                        </div>
+                      </button>
+                      {isOpen && (
+                        <div style={{ marginTop: 10, animation: "fadeIn 0.15s ease" }}>
+                          {contTrips.map(trip => {
+                            const M = MODES.find(m => m.id === trip.mode);
+                            const km = tripKm(trip);
+                            return (
+                              <div key={trip.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                                <div style={{ background: ink, borderRadius: 999, padding: 8, display: "flex", flexShrink: 0 }}><M.Icon size={15} color={brass} /></div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: 14, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                                    <MapPin size={11} color={textDim} />
+                                    {trip.stops.map((s, i) => (
+                                      <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        {i > 0 && <span style={{ color: brass }}>{trip.round_trip ? "↔" : "→"}</span>}
+                                        <span>{s.city}, {s.country}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
+                                    {trip.trip_date || t("noDate")}{km != null ? ` · ${km.toLocaleString(locale)} km` : ""}
+                                  </div>
+                                </div>
+                                <button onClick={() => removeTrip(trip.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <button onClick={() => removeTrip(trip.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           )}
         </div>
