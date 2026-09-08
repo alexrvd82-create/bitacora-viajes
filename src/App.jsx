@@ -17,9 +17,19 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (event === "PASSWORD_RECOVERY") setRecovery(true);
+
+      // Un evento con sesión válida siempre se aplica (login, refresco de token, etc.).
+      if (newSession) { setSession(newSession); return; }
+
+      // Si llega sin sesión pero NO es un cierre de sesión explícito, es casi
+      // siempre un parpadeo de red (típico en móvil al perder cobertura un
+      // instante durante la revalidación del token). Lo ignoramos para no
+      // desmontar toda la app y perder los datos ya cargados.
+      if (event === "SIGNED_OUT") { setSession(null); return; }
+      // event sin sesión y sin ser SIGNED_OUT (p.ej. un TOKEN_REFRESHED fallido
+      // transitorio): no tocamos el estado de sesión actual.
     });
     return () => listener.subscription.unsubscribe();
   }, []);
