@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Plot from "react-plotly.js";
-import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee } from "lucide-react";
+import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
@@ -38,6 +38,8 @@ export default function TravelLog({ session }) {
   const [dark, setDark] = useState(() => localStorage.getItem("bitacora-theme") !== "light");
   useEffect(() => { localStorage.setItem("bitacora-theme", dark ? "dark" : "light"); }, [dark]);
   const { ink, inkPanel, inkLine, paper, brass, teal, rust, textDim } = THEMES[dark ? "dark" : "light"];
+  const [expandedConts, setExpandedConts] = useState({});
+  function toggleCont(code) { setExpandedConts(p => ({ ...p, [code]: !p[code] })); }
 
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -391,28 +393,70 @@ export default function TravelLog({ session }) {
 
         {/* Banderas */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 12 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("worldCountries")}</span>
           </div>
-          {CONTINENTS.map(c => (
-            <div key={c.code} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", margin: "0 0 8px" }}>
-                {t(CONTINENT_KEY[c.code] || c.label).toUpperCase()} · {stats.contCounts[c.code]?.size || 0}/{CONT_TOTALS[c.code]}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
-                {COUNTRIES.filter(x => x.cont === c.code).map(x => {
-                  const visited = stats.countries.has(x.name);
-                  return (
-                    <div key={x.name} title={x.name} style={{ background: ink, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                      <img src={flagUrl(x.iso)} alt={x.name} loading="lazy"
-                        style={{ width: 32, height: 22, objectFit: "cover", borderRadius: 2, filter: visited ? "none" : "grayscale(1)", opacity: visited ? 1 : 0.4 }} />
-                      <span style={{ fontSize: 8, textAlign: "center", lineHeight: 1.1, fontFamily: "'IBM Plex Mono',monospace", color: visited ? paper : textDim }}>{x.name}</span>
+          {CONTINENTS.map(c => {
+            const contCountries = COUNTRIES.filter(x => x.cont === c.code);
+            const visitedCount = stats.contCounts[c.code]?.size || 0;
+            const total = CONT_TOTALS[c.code];
+            const isOpen = !!expandedConts[c.code];
+            const sorted = [...contCountries].sort((a, b) => {
+              const va = stats.countries.has(a.name), vb = stats.countries.has(b.name);
+              if (va !== vb) return va ? -1 : 1;
+              return a.name.localeCompare(b.name);
+            });
+            const previewVisited = contCountries.filter(x => stats.countries.has(x.name)).slice(0, 6);
+            return (
+              <div key={c.code} style={{ marginBottom: 10, borderBottom: `1px solid ${inkLine}`, paddingBottom: 10 }}>
+                <button onClick={() => toggleCont(c.code)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: "4px 0", color: "inherit" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 11, color: textDim, fontFamily: "'IBM Plex Mono',monospace", letterSpacing: "0.05em" }}>
+                      {t(CONTINENT_KEY[c.code] || c.label).toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", color: visitedCount > 0 ? brass : textDim, fontWeight: 700 }}>
+                      {visitedCount}/{total}
+                    </span>
+                    {!isOpen && previewVisited.length > 0 && (
+                      <div style={{ display: "flex", marginLeft: 2 }}>
+                        {previewVisited.map((x, i) => (
+                          <img key={x.name} src={flagUrl(x.iso)} alt="" loading="lazy"
+                            style={{ width: 18, height: 13, objectFit: "cover", borderRadius: 2, marginLeft: i === 0 ? 0 : -6, border: `1.5px solid ${inkPanel}`, boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                        ))}
+                        {visitedCount > previewVisited.length && (
+                          <span style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginLeft: 6, alignSelf: "center" }}>
+                            +{visitedCount - previewVisited.length}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 60, height: 4, background: inkLine, borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: 4, width: `${(visitedCount / total) * 100}%`, background: brass, borderRadius: 2 }} />
                     </div>
-                  );
-                })}
+                    <ChevronDown size={14} color={textDim} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }} />
+                  </div>
+                </button>
+                {isOpen && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12, animation: "fadeIn 0.15s ease" }}>
+                    {sorted.map(x => {
+                      const visited = stats.countries.has(x.name);
+                      return (
+                        <div key={x.name} title={x.name} className="flag-chip"
+                          style={{ background: ink, borderRadius: 8, padding: "5px 5px 4px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, width: 52, cursor: "default", transition: "transform 0.15s ease" }}>
+                          <img src={flagUrl(x.iso)} alt={x.name} loading="lazy"
+                            style={{ width: 30, height: 20, objectFit: "cover", borderRadius: 3, filter: visited ? "none" : "grayscale(1)", opacity: visited ? 1 : 0.35 }} />
+                          <span style={{ fontSize: 7, textAlign: "center", lineHeight: 1.1, fontFamily: "'IBM Plex Mono',monospace", color: visited ? paper : textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>{x.name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Listado */}
