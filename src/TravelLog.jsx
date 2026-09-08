@@ -3,17 +3,12 @@ import Plot from "react-plotly.js";
 import { Plane, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
+import { useLanguage } from "./i18n/LanguageContext.jsx";
+import LanguageSwitcher from "./i18n/LanguageSwitcher.jsx";
 import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
-  MODE_LABELS, BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
+  BADGES, flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
 } from "./data.js";
-
-const MODES = [
-  { id: "avion", label: "Avión", Icon: Plane },
-  { id: "coche", label: "Coche", Icon: Car },
-  { id: "tren", label: "Tren", Icon: TrainFront },
-  { id: "barco", label: "Barco", Icon: Ship },
-];
 
 const THEMES = {
   dark: { ink: "#0a0f1e", inkPanel: "#141b30", inkLine: "#2a3654", paper: "#efe6d2", brass: "#e8b23d", teal: "#4fd1c5", rust: "#e5484d", textDim: "#f2f0e8" },
@@ -22,7 +17,24 @@ const THEMES = {
 
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
 
+const CONTINENT_KEY = { EU: "europe", AS: "asia", AF: "africa", NA: "northAmerica", SA: "southAmerica", OC: "oceania" };
+const BADGE_KEY = {
+  km100k: ["badgeKm100k", "badgeKm100kDesc"],
+  km500k: ["badgeKm500k", "badgeKm500kDesc"],
+  cities10: ["badgeCities10", "badgeCities10Desc"],
+  countries10: ["badgeCountries10", "badgeCountries10Desc"],
+  continents6: ["badgeContinents6", "badgeContinents6Desc"],
+  flights5: ["badgeFlights5", "badgeFlights5Desc"],
+};
+
 export default function TravelLog({ session }) {
+  const { t, locale } = useLanguage();
+  const MODES = [
+    { id: "avion", label: t("modePlane"), Icon: Plane },
+    { id: "coche", label: t("modeCar"), Icon: Car },
+    { id: "tren", label: t("modeTrain"), Icon: TrainFront },
+    { id: "barco", label: t("modeBoat"), Icon: Ship },
+  ];
   const [dark, setDark] = useState(() => localStorage.getItem("bitacora-theme") !== "light");
   useEffect(() => { localStorage.setItem("bitacora-theme", dark ? "dark" : "light"); }, [dark]);
   const { ink, inkPanel, inkLine, paper, brass, teal, rust, textDim } = THEMES[dark ? "dark" : "light"];
@@ -152,26 +164,27 @@ export default function TravelLog({ session }) {
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                 <img src="/logo-v4.png" alt="" style={{ width: 56, height: 56, objectFit: "contain" }} />
                 <span className="mono" style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: textDim }}>
-                  REGISTRO DE RUTAS · KM · COBERTURA MUNDIAL
+                  {t("tagline")}
                 </span>
               </div>
-              <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 800, margin: 0 }}>Bitácora de viajes</h1>
+              <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 800, margin: 0 }}>{t("appName")}</h1>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button onClick={() => setDark(d => !d)} aria-label="Cambiar tema"
+                <LanguageSwitcher theme={{ ink, inkPanel, inkLine, textDim }} compact />
+                <button onClick={() => setDark(d => !d)} aria-label={t("changeTheme")}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
                   {dark ? <Sun size={15} /> : <Moon size={15} />}
                 </button>
                 <button onClick={() => supabase.auth.signOut()}
                   style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, padding: "8px 12px", cursor: "pointer", fontSize: 12 }}>
-                  <LogOut size={14} /> Salir
+                  <LogOut size={14} /> {t("logout")}
                 </button>
               </div>
               <div style={{ fontSize: 12, color: textDim }}>{session.user.email}</div>
               <a href="https://paypal.me/proyectovb6" target="_blank" rel="noopener noreferrer"
                 style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, padding: "7px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
-                <Coffee size={14} /> Invítame a un café
+                <Coffee size={14} /> {t("invite_coffee")}
               </a>
             </div>
           </div>
@@ -179,11 +192,11 @@ export default function TravelLog({ session }) {
 
         {/* Formulario */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 16 }}>NUEVA RUTA</div>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 16 }}>{t("newRoute")}</div>
           <div style={{ marginBottom: 16 }}>
             {stops.map((s, i) => {
               const isFirst = i === 0, isLast = i === stops.length - 1;
-              const label = isFirst ? "ORIGEN" : isLast ? "DESTINO FINAL" : `PARADA ${i}`;
+              const label = isFirst ? t("origin") : isLast ? t("finalDestination") : `${t("stop")} ${i}`;
               return (
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 10 }}>
                   <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -195,11 +208,11 @@ export default function TravelLog({ session }) {
                       </select>
                     </div>
                     <div style={{ position: "relative" }}>
-                      <label style={{ fontSize: 10, color: "transparent" }}>ciudad</label>
+                      <label style={{ fontSize: 10, color: "transparent" }}>city</label>
                       <input value={s.city} onChange={e => updateStop(i, "city", e.target.value)}
                         onFocus={() => { if (suggestions[i]?.length) setOpenSuggestIndex(i); }}
                         onBlur={() => setTimeout(() => setOpenSuggestIndex(null), 150)}
-                        placeholder={isFirst ? "Ciudad de salida" : isLast ? "Ciudad de llegada" : "Ciudad de la parada"}
+                        placeholder={isFirst ? t("departureCity") : isLast ? t("arrivalCity") : t("stopCity")}
                         style={{ width: "100%", marginTop: 4, background: ink, border: `1px solid ${s.lat != null ? teal : inkLine}`, color: paper, borderRadius: 10, padding: 8 }} />
                       {openSuggestIndex === i && suggestions[i]?.length > 0 && (
                         <div style={{ position: "absolute", zIndex: 10, top: "100%", left: 0, right: 0, marginTop: 2, background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 10, maxHeight: 220, overflowY: "auto" }}>
@@ -224,7 +237,7 @@ export default function TravelLog({ session }) {
             })}
             {mode !== "avion" && (
               <button onClick={addStop} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, padding: "6px 12px", borderRadius: 10, border: `1px dashed ${inkLine}`, color: textDim, background: "none", cursor: "pointer" }}>
-                <Plus size={13} /> Añadir parada
+                <Plus size={13} /> {t("addStop")}
               </button>
             )}
           </div>
@@ -241,14 +254,14 @@ export default function TravelLog({ session }) {
             </div>
             <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", border: `1px solid ${inkLine}`, borderRadius: 10, fontSize: 12, color: textDim, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace" }}>
               <input type="checkbox" checked={roundTrip} onChange={e => setRoundTrip(e.target.checked)} />
-              Ida y vuelta (×2 km)
+              {t("roundTrip")}
             </label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
               style={{ marginLeft: "auto", background: ink, border: `1px solid ${inkLine}`, color: textDim, borderRadius: 10, padding: 8, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace" }} />
           </div>
 
           <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Calculando distancia real..." : "Registrar viaje"}
+            {saving ? t("calculatingDistance") : t("registerTrip")}
           </button>
         </div>
 
@@ -257,17 +270,17 @@ export default function TravelLog({ session }) {
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
-          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label="PAÍSES" value={stats.countries.size} suffix={`/${TOTAL_COUNTRIES}`} sub={`${stats.pctWorld.toFixed(1)}% del mundo`} />
-          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label="CONTINENTES" value={stats.contsVisited} suffix="/6" sub={`${((stats.contsVisited / 6) * 100).toFixed(0)}% explorado`} />
-          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label="CIUDADES" value={stats.cities.size} sub="distintas visitadas" subDim />
+          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label={t("countries")} value={stats.countries.size} suffix={`/${TOTAL_COUNTRIES}`} sub={`${stats.pctWorld.toFixed(1)}% ${t("ofWorld")}`} />
+          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label={t("continents")} value={stats.contsVisited} suffix="/6" sub={`${((stats.contsVisited / 6) * 100).toFixed(0)}% ${t("explored")}`} />
+          <StatBox theme={{ inkPanel, inkLine, textDim, brass }} label={t("cities")} value={stats.cities.size} sub={t("distinctVisited")} subDim />
         </div>
 
         {/* Km por medio */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>KM POR MEDIO DE TRANSPORTE</span>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("kmByMode")}</span>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: textDim }}>
-              TOTAL <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{stats.kmTotal.toLocaleString("es-ES")}</span> km
+              {t("total")} <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{stats.kmTotal.toLocaleString(locale)}</span> km
             </span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
@@ -277,7 +290,7 @@ export default function TravelLog({ session }) {
                 <div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{m.label.toUpperCase()}</div>
                   <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700 }}>
-                    {stats.kmByMode[m.id].toLocaleString("es-ES")} <span style={{ fontSize: 10, fontWeight: 400, color: textDim }}>km</span>
+                    {stats.kmByMode[m.id].toLocaleString(locale)} <span style={{ fontSize: 10, fontWeight: 400, color: textDim }}>km</span>
                   </div>
                 </div>
               </div>
@@ -287,7 +300,7 @@ export default function TravelLog({ session }) {
 
         {/* Insignias */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>INSIGNIAS</div>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>{t("badges")}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
             {BADGES.map(b => {
               const value = {
@@ -300,16 +313,17 @@ export default function TravelLog({ session }) {
               const unlocked = value >= b.threshold;
               const pct = Math.min((value / b.threshold) * 100, 100);
               const barColor = dark ? brass : "#8b4513";
+              const [titleKey, descKey] = BADGE_KEY[b.id] || [];
               return (
                 <div key={b.id} style={{ background: ink, borderRadius: 10, padding: 10, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1px solid ${unlocked ? brass : inkLine}`, opacity: unlocked ? 1 : 0.6 }}>
                   {unlocked ? <Trophy size={20} color={brass} /> : <Lock size={16} color={textDim} />}
-                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 12, fontWeight: 700 }}>{b.title}</div>
-                  <div style={{ fontSize: 9, color: paper, fontFamily: "'IBM Plex Mono',monospace" }}>{b.desc}</div>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 12, fontWeight: 700 }}>{titleKey ? t(titleKey) : b.title}</div>
+                  <div style={{ fontSize: 9, color: paper, fontFamily: "'IBM Plex Mono',monospace" }}>{descKey ? t(descKey) : b.desc}</div>
                   <div style={{ height: 4, width: "100%", background: inkLine, borderRadius: 2, overflow: "hidden", marginTop: 4 }}>
                     <div style={{ height: 4, width: `${pct}%`, background: barColor }} />
                   </div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>
-                    {value.toLocaleString("es-ES")}/{b.threshold.toLocaleString("es-ES")}{b.type === "km" ? " km" : ""}
+                    {value.toLocaleString(locale)}/{b.threshold.toLocaleString(locale)}{b.type === "km" ? " km" : ""}
                   </div>
                 </div>
               );
@@ -323,7 +337,7 @@ export default function TravelLog({ session }) {
             <div style={{ width: 110, height: 110, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, ...gaugeStyle }}>
               <div style={{ width: 84, height: 84, borderRadius: 999, background: inkPanel, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 20, fontWeight: 700 }}>{stats.pctWorld.toFixed(1)}%</div>
-                <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>MUNDO</div>
+                <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{t("world")}</div>
               </div>
             </div>
             <div style={{ flex: 1, minWidth: 220 }}>
@@ -334,7 +348,7 @@ export default function TravelLog({ session }) {
                 return (
                   <div key={c.code} style={{ marginBottom: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginBottom: 4 }}>
-                      <span>{c.label}</span><span>{visited}/{total} · {pct.toFixed(0)}%</span>
+                      <span>{t(CONTINENT_KEY[c.code] || c.label)}</span><span>{visited}/{total} · {pct.toFixed(0)}%</span>
                     </div>
                     <div style={{ height: 6, borderRadius: 3, background: inkLine, overflow: "hidden" }}>
                       <div style={{ height: 6, width: `${pct}%`, background: visited > 0 ? brass : inkLine }} />
@@ -349,7 +363,7 @@ export default function TravelLog({ session }) {
         {/* Mapa mundial */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ marginBottom: 12 }}>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>MAPA MUNDIAL</span>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("worldMap")}</span>
           </div>
           <div style={{ borderRadius: 10, overflow: "hidden" }}>
             <Plot
@@ -378,12 +392,12 @@ export default function TravelLog({ session }) {
         {/* Banderas */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
           <div style={{ marginBottom: 8 }}>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>PAÍSES DEL MUNDO</span>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("worldCountries")}</span>
           </div>
           {CONTINENTS.map(c => (
             <div key={c.code} style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", margin: "0 0 8px" }}>
-                {c.label.toUpperCase()} · {stats.contCounts[c.code]?.size || 0}/{CONT_TOTALS[c.code]}
+                {t(CONTINENT_KEY[c.code] || c.label).toUpperCase()} · {stats.contCounts[c.code]?.size || 0}/{CONT_TOTALS[c.code]}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
                 {COUNTRIES.filter(x => x.cont === c.code).map(x => {
@@ -404,37 +418,37 @@ export default function TravelLog({ session }) {
         {/* Listado */}
         <div>
           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 12 }}>
-            RUTAS REGISTRADAS ({trips.length})
+            {t("registeredRoutes")} ({trips.length})
           </div>
           {loading ? (
-            <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 14, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>Cargando...</div>
+            <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 14, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>{t("loadingTrips")}</div>
           ) : trips.length === 0 ? (
             <div style={{ border: `1px dashed ${inkLine}`, borderRadius: 14, padding: 24, textAlign: "center", color: textDim, fontFamily: "'IBM Plex Mono',monospace", fontSize: 13 }}>
-              Aún no hay rutas. Añade tu primer viaje arriba.
+              {t("noTripsYet")}
             </div>
           ) : (
             <div>
-              {trips.map(t => {
-                const M = MODES.find(m => m.id === t.mode);
-                const km = tripKm(t);
+              {trips.map(trip => {
+                const M = MODES.find(m => m.id === trip.mode);
+                const km = tripKm(trip);
                 return (
-                  <div key={t.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                  <div key={trip.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                     <div style={{ background: ink, borderRadius: 999, padding: 8, display: "flex", flexShrink: 0 }}><M.Icon size={15} color={brass} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
                         <MapPin size={11} color={textDim} />
-                        {t.stops.map((s, i) => (
+                        {trip.stops.map((s, i) => (
                           <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            {i > 0 && <span style={{ color: brass }}>{t.round_trip ? "↔" : "→"}</span>}
+                            {i > 0 && <span style={{ color: brass }}>{trip.round_trip ? "↔" : "→"}</span>}
                             <span>{s.city}, {s.country}</span>
                           </span>
                         ))}
                       </div>
                       <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
-                        {t.trip_date || "sin fecha"}{km != null ? ` · ${km.toLocaleString("es-ES")} km` : ""}
+                        {trip.trip_date || t("noDate")}{km != null ? ` · ${km.toLocaleString(locale)} km` : ""}
                       </div>
                     </div>
-                    <button onClick={() => removeTrip(t.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>
+                    <button onClick={() => removeTrip(trip.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>
                       <Trash2 size={15} />
                     </button>
                   </div>

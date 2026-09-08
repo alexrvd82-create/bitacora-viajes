@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
 import { COUNTRY_MAP, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
+import { useLanguage } from "./i18n/LanguageContext.jsx";
 
 // Colores de la propia tarjeta generada (imagen): se queda con su estilo oscuro de marca
 // siempre, para que se vea igual la compartas desde el tema claro o el oscuro de la app.
@@ -23,8 +24,6 @@ const CARD_THEMES = {
 };
 // (colores usados solo por el panel de controles de la web, no por la imagen generada)
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
-
-const MODE_LABELS = { avion: "AVIÓN", coche: "COCHE", tren: "TREN", barco: "BARCO" };
 
 function loadImage(src) {
   return new Promise((resolve) => {
@@ -94,6 +93,13 @@ function drawModeIcon(ctx, mode, cx, cy, size, color) {
 }
 
 export default function ShareCard({ trips, theme, dark = true }) {
+  const { t, locale, lang } = useLanguage();
+  const MODE_LABELS = {
+    avion: t("modePlane").toUpperCase(),
+    coche: t("modeCar").toUpperCase(),
+    tren: t("modeTrain").toUpperCase(),
+    barco: t("modeBoat").toUpperCase(),
+  };
   const ui = theme || { ink, inkPanel, inkLine, paper, brass, teal, textDim };
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -165,13 +171,13 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.textAlign = "left";
     ctx.fillStyle = C.brass;
     ctx.font = "700 30px 'IBM Plex Mono', monospace";
-    ctx.fillText("BITÁCORA DE VIAJES", 70, 100);
+    ctx.fillText(t("cardBrand"), 70, 100);
 
     // Rango de fechas, tipografía grande moderna
     ctx.fillStyle = C.paper;
     const rangeText = start && end
       ? `${fmtDate(start)} — ${fmtDate(end)}`
-      : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : "Mi viaje";
+      : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : t("myTrip");
     const rangeSize = fitFontSize(ctx, rangeText, 900, 108, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${rangeSize}px 'Space Grotesk', sans-serif`;
     wrapLeftText(ctx, rangeText, 70, 250, 940, rangeSize * 1.15);
@@ -186,13 +192,13 @@ export default function ShareCard({ trips, theme, dark = true }) {
     // KM total — número hero, grande, se autoajusta para no salirse
     ctx.textAlign = "center";
     ctx.fillStyle = C.brass;
-    const kmText = kmTotal.toLocaleString("es-ES");
+    const kmText = kmTotal.toLocaleString(locale);
     const kmSize = fitFontSize(ctx, kmText, 940, 260, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${kmSize}px 'Space Grotesk', sans-serif`;
     ctx.fillText(kmText, W / 2, y);
     ctx.fillStyle = C.textDim;
     ctx.font = "800 40px 'IBM Plex Mono', monospace";
-    ctx.fillText("KILÓMETROS RECORRIDOS", W / 2, y + 66);
+    ctx.fillText(t("cardKmTraveled"), W / 2, y + 66);
     y += 200;
 
     // Chips de km por medio
@@ -210,7 +216,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
       roundRect(ctx, x, y, blockW, blockH, 22); ctx.stroke();
       ctx.textAlign = "center";
       drawModeIcon(ctx, m, x + blockW / 2, y + 68, 76, C.paper);
-      const modeKmText = kmByMode[m].toLocaleString("es-ES");
+      const modeKmText = kmByMode[m].toLocaleString(locale);
       const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px 'Space Grotesk', sans-serif`);
       ctx.font = `800 ${modeKmSize}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = C.brass;
@@ -224,9 +230,9 @@ export default function ShareCard({ trips, theme, dark = true }) {
     // Países / ciudades / tramos
     const mint = "#5fd4c4", coral = "#e8916a";
     const stats = [
-      { value: countrySet.size, label: "PAÍSES", accent: C.brass },
-      { value: citySet.size, label: "CIUDADES", accent: mint },
-      { value: filtered.length, label: "TRAYECTOS", accent: coral },
+      { value: countrySet.size, label: t("countries"), accent: C.brass },
+      { value: citySet.size, label: t("cities"), accent: mint },
+      { value: filtered.length, label: t("shareTrayectos"), accent: coral },
     ];
     const sW = (W - 160) / 3;
     stats.forEach((s, i) => {
@@ -251,7 +257,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.font = "800 31px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
     ctx.textAlign = "center";
-    ctx.fillText("PAÍSES VISITADOS EN ESTE PERIODO", W / 2, y);
+    ctx.fillText(t("visitedInPeriod"), W / 2, y);
     y += 56;
 
     const flagW = 150, flagH = 102, gap = 26;
@@ -286,20 +292,20 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.textAlign = "center";
     ctx.font = "800 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText("HISTORIAL GLOBAL DE PAÍSES", W / 2, y + 48);
+    ctx.fillText(t("globalHistory"), W / 2, y + 48);
     ctx.font = "800 96px 'Space Grotesk', sans-serif";
     ctx.fillStyle = C.brass;
     ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
     ctx.font = "700 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.paper;
-    ctx.fillText(`${lifetimeCountrySet.size} de ${TOTAL_COUNTRIES} países del mundo`, W / 2, y + 172);
+    ctx.fillText(`${lifetimeCountrySet.size}/${TOTAL_COUNTRIES} · ${t("worldCountries")}`, W / 2, y + 172);
     y += covH + 60;
 
     // Pie
     ctx.textAlign = "center";
     ctx.font = "700 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText("🌍 mi bitácora de viajes", W / 2, H - 76);
+    ctx.fillText(t("footerTag"), W / 2, H - 76);
     const urlColor = dark ? "#ffc857" : "#a0431e";
     const urlText = "https://bitacora-viajes-arvd.vercel.app";
     const urlSize = fitFontSize(ctx, urlText, W - 100, 40, s => `800 ${s}px 'Space Grotesk', sans-serif`);
@@ -323,8 +329,9 @@ export default function ShareCard({ trips, theme, dark = true }) {
 
   function fmtDate(d) {
     const [y, m, day] = d.split("-");
-    const months = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-    return `${parseInt(day)} ${months[parseInt(m) - 1]}`;
+    const date = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(day)));
+    const monthAbbr = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(date).toUpperCase().replace(".", "");
+    return `${parseInt(day)} ${monthAbbr}`;
   }
 
   function wrapLeftText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -341,16 +348,16 @@ export default function ShareCard({ trips, theme, dark = true }) {
 
   function download() {
     const a = document.createElement("a");
-    a.href = imgUrl; a.download = "bitacora-viajes.png";
+    a.href = imgUrl; a.download = "travel-maps.png";
     a.click();
   }
 
   async function share() {
     const res = await fetch(imgUrl);
     const blob = await res.blob();
-    const file = new File([blob], "bitacora-viajes.png", { type: "image/png" });
+    const file = new File([blob], "travel-maps.png", { type: "image/png" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Mi bitácora de viajes" });
+      await navigator.share({ files: [file], title: t("shareTitle") });
     } else {
       download();
     }
@@ -359,44 +366,44 @@ export default function ShareCard({ trips, theme, dark = true }) {
   return (
     <div style={{ background: ui.inkPanel, border: `1px solid ${ui.inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
       <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: ui.brass, marginBottom: 12 }}>
-        COMPARTIR RESUMEN
+        {t("shareSummary")}
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div>
-          <label style={{ fontSize: 10, color: ui.textDim, fontFamily: "'IBM Plex Mono',monospace" }}>DESDE</label>
+          <label style={{ fontSize: 10, color: ui.textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{t("from")}</label>
           <input type="date" value={start} onChange={e => setStart(e.target.value)}
             style={{ display: "block", marginTop: 4, background: ui.ink, border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, padding: 8, fontSize: 12 }} />
         </div>
         <div>
-          <label style={{ fontSize: 10, color: ui.textDim, fontFamily: "'IBM Plex Mono',monospace" }}>HASTA</label>
+          <label style={{ fontSize: 10, color: ui.textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{t("to")}</label>
           <input type="date" value={end} onChange={e => setEnd(e.target.value)}
             style={{ display: "block", marginTop: 4, background: ui.ink, border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, padding: 8, fontSize: 12 }} />
         </div>
         <div style={{ alignSelf: "flex-end" }}>
           <button onClick={generate} disabled={generating || filtered.length === 0}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: ui.brass, color: ui.ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: generating || filtered.length === 0 ? 0.6 : 1 }}>
-            <ImageIcon size={15} /> {generating ? "Generando..." : "Generar tarjeta"}
+            <ImageIcon size={15} /> {generating ? t("generating") : t("generateCard")}
           </button>
         </div>
       </div>
       {(!start && !end) && (
-        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>Deja las fechas vacías para incluir todos tus viajes con fecha registrada.</div>
+        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>{t("emptyDatesHint")}</div>
       )}
       {start && end && filtered.length === 0 && (
-        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>No hay viajes con fecha en ese rango.</div>
+        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>{t("noTripsInRange")}</div>
       )}
 
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       {imgUrl && (
         <div>
-          <img src={imgUrl} alt="Resumen de viaje" style={{ width: "100%", maxWidth: 280, borderRadius: 14, border: `1px solid ${ui.inkLine}`, display: "block", margin: "0 auto 14px" }} />
+          <img src={imgUrl} alt={t("tripSummaryAlt")} style={{ width: "100%", maxWidth: 280, borderRadius: 14, border: `1px solid ${ui.inkLine}`, display: "block", margin: "0 auto 14px" }} />
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
             <button onClick={download} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: "none", border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, cursor: "pointer", fontSize: 13 }}>
-              <Download size={14} /> Descargar
+              <Download size={14} /> {t("download")}
             </button>
             <button onClick={share} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: ui.brass, border: "none", color: ui.ink, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
-              <Share2 size={14} /> Compartir
+              <Share2 size={14} /> {t("share")}
             </button>
           </div>
         </div>
