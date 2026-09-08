@@ -477,8 +477,8 @@ export default function TravelLog({ session }) {
               {(() => {
                 const groups = {};
                 for (const trip of trips) {
-                  const originCountry = COUNTRY_MAP[trip.stops[0]?.country];
-                  const code = originCountry?.cont || "OTHER";
+                  const destCountry = COUNTRY_MAP[trip.stops[trip.stops.length - 1]?.country];
+                  const code = destCountry?.cont || "OTHER";
                   (groups[code] = groups[code] || []).push(trip);
                 }
                 const orderedCodes = [...CONTINENTS.map(c => c.code), "OTHER"].filter(code => groups[code]?.length);
