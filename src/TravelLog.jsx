@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense, Component } from "react";
-import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route } from "lucide-react";
+import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route, Pencil } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import ShareCard from "./ShareCard.jsx";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
@@ -70,10 +70,19 @@ export default function TravelLog({ session }) {
   const [mode, setMode] = useState("avion");
   const [date, setDate] = useState("");
   const [roundTrip, setRoundTrip] = useState(true);
+  const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [suggestions, setSuggestions] = useState({}); // { [stopIndex]: [{name, admin1, country, country_code, lat, lon}] }
   const [openSuggestIndex, setOpenSuggestIndex] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const debounceRef = useRef({});
+  const [unit, setUnit] = useState(() => localStorage.getItem("bitacora-unit") || "km");
+  useEffect(() => { localStorage.setItem("bitacora-unit", unit); }, [unit]);
+  function formatDist(km) {
+    if (km == null) return "";
+    const value = unit === "mi" ? km * 0.621371 : km;
+    return `${Math.round(value).toLocaleString(locale)} ${unit}`;
+  }
 
   useEffect(() => { loadTrips(); }, []);
 
@@ -138,17 +147,51 @@ export default function TravelLog({ session }) {
       round_trip: roundTrip,
       stops: resolvedStops,
       km,
+      notes: notes.trim() || null,
     };
-    const { data, error } = await supabase.from("trips").insert(payload).select().single();
-    if (!error && data) setTrips(prev => [data, ...prev]);
+    if (editingId) {
+      const { data, error } = await supabase.from("trips").update(payload).eq("id", editingId).select().single();
+      if (!error && data) setTrips(prev => prev.map(t => (t.id === editingId ? data : t)));
+      setEditingId(null);
+    } else {
+      const { data, error } = await supabase.from("trips").insert(payload).select().single();
+      if (!error && data) setTrips(prev => [data, ...prev]);
+    }
     setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "", lat: undefined, lon: undefined }))));
     setDate("");
+    setNotes("");
     setSaving(false);
+  }
+
+  function startEdit(trip) {
+    setEditingId(trip.id);
+    setStops(trip.stops.map(s => ({ ...s })));
+    setMode(trip.mode);
+    setDate(trip.trip_date || "");
+    setRoundTrip(!!trip.round_trip);
+    setNotes(trip.notes || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setStops(emptyStops());
+    setMode("avion");
+    setDate("");
+    setRoundTrip(true);
+    setNotes("");
   }
 
   async function removeTrip(id) {
     setTrips(prev => prev.filter(t => t.id !== id));
     await supabase.from("trips").delete().eq("id", id);
+  }
+
+  async function deleteAllData() {
+    const confirmed = window.confirm(t("deleteDataConfirm"));
+    if (!confirmed) return;
+    await supabase.from("trips").delete().eq("user_id", session.user.id);
+    setTrips([]);
   }
 
   const stats = useMemo(() => {
@@ -199,6 +242,10 @@ export default function TravelLog({ session }) {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <LanguageSwitcher theme={{ ink, inkPanel, inkLine, textDim }} compact />
+                <button onClick={() => setUnit(u => u === "km" ? "mi" : "km")} aria-label="Toggle unit"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, height: 36, minWidth: 36, padding: "0 10px", cursor: "pointer", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
+                  {unit.toUpperCase()}
+                </button>
                 <button onClick={() => setDark(d => !d)} aria-label={t("changeTheme")}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
                   {dark ? <Sun size={15} /> : <Moon size={15} />}
@@ -209,6 +256,10 @@ export default function TravelLog({ session }) {
                 </button>
               </div>
               <div style={{ fontSize: 12, color: textDim }}>{session.user.email}</div>
+              <button onClick={deleteAllData}
+                style={{ background: "none", border: "none", color: textDim, opacity: 0.6, fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 }}>
+                {t("deleteDataLink")}
+              </button>
               <a href="https://paypal.me/proyectovb6" target="_blank" rel="noopener noreferrer"
                 style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, padding: "7px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
                 <Coffee size={14} /> {t("invite_coffee")}
@@ -217,9 +268,17 @@ export default function TravelLog({ session }) {
           </div>
         </div>
 
+        {!loading && trips.length === 0 && (
+          <div style={{ background: `linear-gradient(135deg, ${inkPanel}, ${ink})`, border: `1px solid ${brass}55`, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
+            <Globe2 size={26} color={brass} style={{ marginBottom: 8 }} />
+            <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{t("welcomeTitle")}</div>
+            <div style={{ fontSize: 13, color: textDim, maxWidth: 440, margin: "0 auto" }}>{t("welcomeDesc")}</div>
+          </div>
+        )}
+
         {/* Formulario */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 16 }}>{t("newRoute")}</div>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass, marginBottom: 16 }}>{editingId ? t("editRoute") : t("newRoute")}</div>
           <div style={{ marginBottom: 16 }}>
             {stops.map((s, i) => {
               const isFirst = i === 0, isLast = i === stops.length - 1;
@@ -287,9 +346,19 @@ export default function TravelLog({ session }) {
               style={{ marginLeft: "auto", background: ink, border: `1px solid ${inkLine}`, color: textDim, borderRadius: 10, padding: 8, fontSize: 12, fontFamily: "'IBM Plex Mono',monospace" }} />
           </div>
 
-          <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? t("calculatingDistance") : t("registerTrip")}
-          </button>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={t("notesPlaceholder")} rows={2} maxLength={500}
+            style={{ width: "100%", background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 10, padding: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", marginBottom: 16 }} />
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
+              {saving ? t("calculatingDistance") : editingId ? t("saveChanges") : t("registerTrip")}
+            </button>
+            {editingId && (
+              <button onClick={cancelEdit} style={{ padding: "11px 20px", background: "none", color: textDim, border: `1px solid ${inkLine}`, borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                {t("cancelEdit")}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Compartir resumen */}
@@ -307,7 +376,7 @@ export default function TravelLog({ session }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("kmByMode")}</span>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: textDim }}>
-              {t("total")} <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{stats.kmTotal.toLocaleString(locale)}</span> km
+              {t("total")} <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{formatDist(stats.kmTotal)}</span>
             </span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
@@ -317,7 +386,7 @@ export default function TravelLog({ session }) {
                 <div>
                   <div style={{ fontSize: 9, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{m.label.toUpperCase()}</div>
                   <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700 }}>
-                    {stats.kmByMode[m.id].toLocaleString(locale)} <span style={{ fontSize: 10, fontWeight: 400, color: textDim }}>km</span>
+                    {formatDist(stats.kmByMode[m.id])}
                   </div>
                 </div>
               </div>
@@ -344,7 +413,7 @@ export default function TravelLog({ session }) {
               const tierColor = TIERS[Math.min(tierIdx, TIERS.length - 1)];
               const Icon = fam.icon;
               const label = fam.isKm
-                ? `${threshold.toLocaleString(locale)} km`
+                ? formatDist(threshold)
                 : fam.titleKey
                   ? `${threshold} ${t(fam.titleKey).toLowerCase()}`
                   : `${threshold} ${t(fam.labelKey)}`;
@@ -549,7 +618,7 @@ export default function TravelLog({ session }) {
                           )}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 11, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{totalKm.toLocaleString(locale)} km</span>
+                          <span style={{ fontSize: 11, color: textDim, fontFamily: "'IBM Plex Mono',monospace" }}>{formatDist(totalKm)}</span>
                           <ChevronDown size={14} color={textDim} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }} />
                         </div>
                       </button>
@@ -572,12 +641,20 @@ export default function TravelLog({ session }) {
                                     ))}
                                   </div>
                                   <div style={{ fontSize: 10, color: textDim, fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
-                                    {trip.trip_date || t("noDate")}{km != null ? ` · ${km.toLocaleString(locale)} km` : ""}
+                                    {trip.trip_date || t("noDate")}{km != null ? ` · ${formatDist(km)}` : ""}
                                   </div>
+                                  {trip.notes && (
+                                    <div style={{ fontSize: 12, color: paper, marginTop: 4, fontStyle: "italic" }}>{trip.notes}</div>
+                                  )}
                                 </div>
-                                <button onClick={() => removeTrip(trip.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer", flexShrink: 0 }}>
-                                  <Trash2 size={15} />
-                                </button>
+                                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                                  <button onClick={() => startEdit(trip)} style={{ padding: 6, background: "none", border: "none", color: textDim, cursor: "pointer" }}>
+                                    <Pencil size={14} />
+                                  </button>
+                                  <button onClick={() => removeTrip(trip.id)} style={{ padding: 6, background: "none", border: "none", color: rust, cursor: "pointer" }}>
+                                    <Trash2 size={15} />
+                                  </button>
+                                </div>
                               </div>
                             );
                           })}

@@ -82,6 +82,10 @@ export default function Landing({ onStart, onLogin }) {
           </button>
           <div style={{ fontSize: 12, color: textDim, marginTop: 14 }}>{t("freeNoCard")}</div>
         </div>
+
+        <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: `1px solid ${inkLine}` }}>
+          <a href="/privacy.html" style={{ fontSize: 12, color: textDim, textDecoration: "underline" }}>Privacy Policy</a>
+        </div>
       </div>
     </div>
   );
