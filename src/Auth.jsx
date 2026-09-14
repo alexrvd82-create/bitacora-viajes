@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
+import { track } from "./analytics.js";
 import { ArrowLeft } from "lucide-react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import LanguageSwitcher from "./i18n/LanguageSwitcher.jsx";
@@ -16,6 +17,7 @@ export default function Auth({ initialMode = "login", onBack }) {
 
   async function handleGoogle() {
     setMsg(null);
+    track("login_google_click");
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin },
@@ -30,10 +32,11 @@ export default function Auth({ initialMode = "login", onBack }) {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setMsg({ type: "error", text: error.message });
+      else track("login_success");
     } else if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) setMsg({ type: "error", text: error.message });
-      else setMsg({ type: "ok", text: t("signupSuccess") });
+      else { setMsg({ type: "ok", text: t("signupSuccess") }); track("signup_success"); }
     } else if (mode === "forgot") {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin,

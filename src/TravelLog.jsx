@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense, Component } from "react";
-import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route, Pencil } from "lucide-react";
+import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route, Pencil, Download } from "lucide-react";
 import { supabase } from "./supabaseClient";
+import { track } from "./analytics.js";
 import ShareCard from "./ShareCard.jsx";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import LanguageSwitcher from "./i18n/LanguageSwitcher.jsx";
@@ -151,11 +152,11 @@ export default function TravelLog({ session }) {
     };
     if (editingId) {
       const { data, error } = await supabase.from("trips").update(payload).eq("id", editingId).select().single();
-      if (!error && data) setTrips(prev => prev.map(t => (t.id === editingId ? data : t)));
+      if (!error && data) { setTrips(prev => prev.map(t => (t.id === editingId ? data : t))); track("trip_edited", session.user.id); }
       setEditingId(null);
     } else {
       const { data, error } = await supabase.from("trips").insert(payload).select().single();
-      if (!error && data) setTrips(prev => [data, ...prev]);
+      if (!error && data) { setTrips(prev => [data, ...prev]); track("trip_added", session.user.id); }
     }
     setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "", lat: undefined, lon: undefined }))));
     setDate("");
@@ -184,6 +185,7 @@ export default function TravelLog({ session }) {
 
   async function removeTrip(id) {
     setTrips(prev => prev.filter(t => t.id !== id));
+    track("trip_deleted", session.user.id);
     await supabase.from("trips").delete().eq("id", id);
   }
 
@@ -192,6 +194,35 @@ export default function TravelLog({ session }) {
     if (!confirmed) return;
     await supabase.from("trips").delete().eq("user_id", session.user.id);
     setTrips([]);
+  }
+
+  function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportJSON() {
+    downloadBlob(JSON.stringify(trips, null, 2), "travel-maps-export.json", "application/json");
+  }
+
+  function exportCSV() {
+    const header = ["date", "mode", "round_trip", "km", "notes", "stops"];
+    const rows = trips.map(trip => [
+      trip.trip_date || "",
+      trip.mode,
+      trip.round_trip ? "yes" : "no",
+      tripKm(trip) ?? "",
+      (trip.notes || "").replace(/"/g, '""'),
+      trip.stops.map(s => `${s.city}, ${s.country}`).join(" -> "),
+    ]);
+    const csv = [header, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    downloadBlob(csv, "travel-maps-export.csv", "text/csv");
   }
 
   const stats = useMemo(() => {
@@ -262,6 +293,14 @@ export default function TravelLog({ session }) {
                 </button>
               </div>
               <div style={{ fontSize: 12, color: textDim }}>{session.user.email}</div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={exportCSV} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", color: textDim, opacity: 0.7, fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 }}>
+                  <Download size={11} /> CSV
+                </button>
+                <button onClick={exportJSON} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", color: textDim, opacity: 0.7, fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 }}>
+                  <Download size={11} /> JSON
+                </button>
+              </div>
               <button onClick={deleteAllData}
                 style={{ background: "none", border: "none", color: textDim, opacity: 0.6, fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 }}>
                 {t("deleteDataLink")}

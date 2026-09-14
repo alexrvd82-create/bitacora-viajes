@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
 import { COUNTRY_MAP, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
+import { track } from "./analytics.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
 // Colores de la propia tarjeta generada (imagen): se queda con su estilo oscuro de marca
@@ -315,6 +316,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
 
     setImgUrl(canvas.toDataURL("image/png"));
     setGenerating(false);
+    track("card_generated");
   }
 
   function fitFontSize(ctx, text, maxWidth, startSize, fontSpec) {

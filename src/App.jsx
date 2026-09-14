@@ -1,5 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "./supabaseClient";
+import { track } from "./analytics.js";
 import Landing from "./Landing.jsx";
 import Auth from "./Auth.jsx";
 import UpdatePassword from "./UpdatePassword.jsx";
@@ -33,6 +34,10 @@ export default function App() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (session === null && view === "landing") track("landing_view");
+  }, [session, view]);
 
   if (session === undefined) {
     return <LoadingScreen />;
