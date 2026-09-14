@@ -242,10 +242,16 @@ export default function TravelLog({ session }) {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <LanguageSwitcher theme={{ ink, inkPanel, inkLine, textDim }} compact />
-                <button onClick={() => setUnit(u => u === "km" ? "mi" : "km")} aria-label="Toggle unit"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, height: 36, minWidth: 36, padding: "0 10px", cursor: "pointer", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
-                  {unit.toUpperCase()}
-                </button>
+                <div style={{ display: "flex", border: `1px solid ${inkLine}`, borderRadius: 14, height: 36, overflow: "hidden" }}>
+                  <button onClick={() => setUnit("km")} aria-label="Kilometers"
+                    style={{ padding: "0 10px", background: unit === "km" ? brass : "none", color: unit === "km" ? ink : textDim, border: "none", cursor: "pointer", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
+                    KM
+                  </button>
+                  <button onClick={() => setUnit("mi")} aria-label="Miles"
+                    style={{ padding: "0 10px", background: unit === "mi" ? brass : "none", color: unit === "mi" ? ink : textDim, border: "none", borderLeft: `1px solid ${inkLine}`, cursor: "pointer", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
+                    MI
+                  </button>
+                </div>
                 <button onClick={() => setDark(d => !d)} aria-label={t("changeTheme")}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
                   {dark ? <Sun size={15} /> : <Moon size={15} />}
