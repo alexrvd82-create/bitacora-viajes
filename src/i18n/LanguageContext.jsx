@@ -9,8 +9,9 @@ function detectInitialLanguage() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored && SUPPORTED_CODES.includes(stored)) return stored;
   } catch (e) { /* localStorage unavailable */ }
-  const browserLang = (navigator.language || "en").slice(0, 2).toLowerCase();
-  return SUPPORTED_CODES.includes(browserLang) ? browserLang : "en";
+  // English is always the default on first visit — language only changes
+  // when the person picks one themselves from the selector.
+  return "en";
 }
 
 const LanguageContext = createContext(null);
