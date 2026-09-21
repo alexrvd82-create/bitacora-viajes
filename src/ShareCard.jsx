@@ -25,6 +25,8 @@ const CARD_THEMES = {
 };
 // (colores usados solo por el panel de controles de la web, no por la imagen generada)
 const ink = "#0c1729", inkPanel = "#16233d", inkLine = "#2b3c5c", paper = "#efe6d2", brass = "#c1913f", teal = "#3f7a76", textDim = "#94a3c4";
+const EARTH_CIRCUMFERENCE_KM = 40075;
+const MOON_DISTANCE_KM = 384400;
 
 function loadImage(src) {
   return new Promise((resolve) => {
@@ -200,6 +202,17 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.fillStyle = C.textDim;
     ctx.font = "800 40px 'IBM Plex Mono', monospace";
     ctx.fillText(t("cardKmTraveled"), W / 2, y + 66);
+
+    const earthLoops = kmTotal / EARTH_CIRCUMFERENCE_KM;
+    const equivText = kmTotal >= MOON_DISTANCE_KM
+      ? `🌍 ${(kmTotal / MOON_DISTANCE_KM).toFixed(2)} ${t("equivMoon")}`
+      : earthLoops >= 1
+        ? `🌍 ${earthLoops.toFixed(2)} ${t("equivWorld")}`
+        : `🌍 ${Math.min(earthLoops * 100, 100).toFixed(1)}% ${t("equivWorldPct")}`;
+    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.paper;
+    ctx.fillText(equivText, W / 2, y + 110);
+
     y += 200;
 
     // Chips de km por medio

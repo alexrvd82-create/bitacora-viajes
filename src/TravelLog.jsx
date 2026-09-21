@@ -33,6 +33,11 @@ const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia"
 
 const CONTINENT_KEY = { EU: "europe", AS: "asia", AF: "africa", NA: "northAmerica", SA: "southAmerica", OC: "oceania" };
 
+// g CO2 per passenger-km, approximate averages (informational estimate, not a precise calculator)
+const CO2_FACTORS_G_PER_KM = { avion: 250, coche: 192, tren: 41, barco: 250 };
+const EARTH_CIRCUMFERENCE_KM = 40075;
+const MOON_DISTANCE_KM = 384400;
+
 const TIERS = ["#c07830", "#b7bec9", "#e8b23d", "#4fd1c5"]; // bronze, silver, gold, diamond
 
 // Badge "families": each defines how to compute value, the icon, and the thresholds (tiers).
@@ -245,11 +250,15 @@ export default function TravelLog({ session }) {
     });
     const contsVisited = CONTINENTS.filter(c => contCounts[c.code].size > 0).length;
     const flightsCount = trips.filter(t => t.mode === "avion").length;
+    const co2Kg = Object.entries(kmByMode).reduce((sum, [m, km]) => sum + (km * (CO2_FACTORS_G_PER_KM[m] || 0)) / 1000, 0);
+    const earthLoops = kmTotal / EARTH_CIRCUMFERENCE_KM;
+    const moonPct = (kmTotal / MOON_DISTANCE_KM) * 100;
     return {
       countries: countrySet, cities: citySet, kmByMode, kmTotal, contCounts, flightsCount,
       contsVisited, pctWorld: (countrySet.size / TOTAL_COUNTRIES) * 100,
       citiesCount: citySet.size, countriesCount: countrySet.size, tripsCount: trips.length,
       kmPlane: kmByMode.avion, kmCar: kmByMode.coche, kmTrain: kmByMode.tren, kmBoat: kmByMode.barco,
+      co2Kg, earthLoops, moonPct,
     };
   }, [trips]);
 
@@ -438,6 +447,28 @@ export default function TravelLog({ session }) {
             ))}
           </div>
         </div>
+
+        {stats.kmTotal > 0 && (
+          <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+            <div>
+              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, letterSpacing: "0.08em", color: brass, marginBottom: 6 }}>🌍 {t("equivWorld").toUpperCase()}</div>
+              <div style={{ fontSize: 14, color: paper }}>
+                {stats.kmTotal >= MOON_DISTANCE_KM
+                  ? `${(stats.kmTotal / MOON_DISTANCE_KM).toFixed(2)} ${t("equivMoon")}`
+                  : stats.earthLoops >= 1
+                    ? `${stats.earthLoops.toFixed(2)} ${t("equivWorld")}`
+                    : `${Math.min(stats.earthLoops * 100, 100).toFixed(1)}% ${t("equivWorldPct")}`}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, letterSpacing: "0.08em", color: brass, marginBottom: 6 }}>🌱 {t("co2Label").toUpperCase()}</div>
+              <div style={{ fontSize: 14, color: paper }}>
+                {stats.co2Kg >= 1000 ? `${(stats.co2Kg / 1000).toFixed(2)} t CO₂` : `${Math.round(stats.co2Kg).toLocaleString(locale)} kg CO₂`}
+              </div>
+              <div style={{ fontSize: 10, color: textDim, marginTop: 2 }}>({t("co2Note")})</div>
+            </div>
+          </div>
+        )}
 
         {/* Insignias */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
