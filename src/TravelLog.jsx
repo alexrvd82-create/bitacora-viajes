@@ -10,7 +10,7 @@ import {
   flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
 } from "./data.js";
 
-const Plot = lazy(() => import("react-plotly.js"));
+const Plot = lazy(() => import("./PlotlyGeoPlot.js"));
 
 // Aísla el mapa mundial (Plotly) del resto de la app: si falla al cargar o
 // renderizar en un dispositivo con pocos recursos, no rompe el resto de la página.
@@ -590,7 +590,7 @@ export default function TravelLog({ session }) {
                     type: "scattergeo", mode: "markers",
                     lat: cityPoints.map(p => p.lat), lon: cityPoints.map(p => p.lon),
                     text: cityPoints.map(p => `${p.city}, ${p.country}`), hoverinfo: "text",
-                    marker: { symbol: "star", size: 9, color: brass, line: { color: ink, width: 1 } },
+                    marker: { symbol: "circle", size: 7, color: "#e5484d", line: { color: ink, width: 1 } },
                   }]}
                   layout={{
                     geo: { projection: { type: "natural earth" }, showframe: false, showcoastlines: false, showocean: true, oceancolor: ink, landcolor: inkLine, bgcolor: "transparent" },
