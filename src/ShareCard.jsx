@@ -61,13 +61,25 @@ function drawModeIcon(ctx, mode, cx, cy, size, color) {
   ctx.lineJoin = "round";
   ctx.beginPath();
   if (mode === "avion") {
-    ctx.moveTo(-42, 6);
-    ctx.lineTo(38, -22);
-    ctx.lineTo(10, 4);
-    ctx.lineTo(18, 34);
-    ctx.lineTo(2, 16);
-    ctx.lineTo(-14, 24);
-    ctx.lineTo(-8, 4);
+    // Silueta de avión clásica (fuselaje + alas + timón + cola), más reconocible que un polígono suelto
+    ctx.moveTo(36, 16);
+    ctx.lineTo(36, 8);
+    ctx.lineTo(4, -12);
+    ctx.lineTo(4, -34);
+    ctx.lineTo(-2, -40);
+    ctx.lineTo(-8, -34);
+    ctx.lineTo(-8, -12);
+    ctx.lineTo(-40, 8);
+    ctx.lineTo(-40, 16);
+    ctx.lineTo(-8, 6);
+    ctx.lineTo(-8, 28);
+    ctx.lineTo(-18, 34);
+    ctx.lineTo(-18, 40);
+    ctx.lineTo(-2, 36);
+    ctx.lineTo(14, 40);
+    ctx.lineTo(14, 34);
+    ctx.lineTo(4, 28);
+    ctx.lineTo(4, 6);
     ctx.closePath();
     ctx.fill();
   } else if (mode === "coche") {
@@ -135,12 +147,25 @@ export default function ShareCard({ trips, theme, dark = true }) {
     const kmTotal = Object.values(kmByMode).reduce((a, b) => a + b, 0);
     const countries = [...countrySet];
 
+    // Distribución de las banderas: deben caber todas, en filas, achicándolas cuantas más haya
+    const maxRowW = 1080 - 160;
+    let flagW, flagH, flagGap;
+    if (countries.length <= 5) { flagW = 150; flagH = 102; flagGap = 26; }
+    else if (countries.length <= 10) { flagW = 118; flagH = 80; flagGap = 20; }
+    else if (countries.length <= 18) { flagW = 92; flagH = 63; flagGap = 16; }
+    else if (countries.length <= 30) { flagW = 72; flagH = 49; flagGap = 12; }
+    else { flagW = 56; flagH = 38; flagGap = 10; }
+    const flagsPerRow = Math.max(1, Math.floor((maxRowW + flagGap) / (flagW + flagGap)));
+    const flagRows = [];
+    for (let i = 0; i < countries.length; i += flagsPerRow) flagRows.push(countries.slice(i, i + flagsPerRow));
+    const extraFlagRows = Math.max(0, flagRows.length - 1);
+
     // Cobertura mundial de toda la vida (todos los viajes, no solo el rango de fechas elegido)
     const lifetimeCountrySet = new Set();
     trips.forEach(t => t.stops.forEach(s => lifetimeCountrySet.add(s.country)));
     const lifetimePct = (lifetimeCountrySet.size / TOTAL_COUNTRIES) * 100;
 
-    const W = 1080, H = 1920;
+    const W = 1080, H = 1920 + extraFlagRows * (flagH + flagGap);
     const canvas = canvasRef.current;
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
@@ -229,7 +254,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
       ctx.strokeStyle = `rgba(${C.brassRGB},0.35)`; ctx.lineWidth = 2;
       roundRect(ctx, x, y, blockW, blockH, 22); ctx.stroke();
       ctx.textAlign = "center";
-      drawModeIcon(ctx, m, x + blockW / 2, y + 68, 76, C.paper);
+      drawModeIcon(ctx, m, x + blockW / 2, y + 68, 86, C.paper);
       const modeKmText = kmByMode[m].toLocaleString(locale);
       const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px 'Space Grotesk', sans-serif`);
       ctx.font = `800 ${modeKmSize}px 'Space Grotesk', sans-serif`;
@@ -274,32 +299,28 @@ export default function ShareCard({ trips, theme, dark = true }) {
     ctx.fillText(t("visitedInPeriod"), W / 2, y);
     y += 56;
 
-    const flagW = 150, flagH = 102, gap = 26;
-    const maxFlags = Math.min(countries.length, 5);
-    const totalFlagsW = maxFlags * flagW + (maxFlags - 1) * gap;
-    let fx = (W - totalFlagsW) / 2;
-    const imgs = await Promise.all(countries.slice(0, 5).map(name => {
+    const imgs = await Promise.all(countries.map(name => {
       const c = COUNTRY_MAP[name];
       return c ? loadImage(flagUrl(c.iso)) : Promise.resolve(null);
     }));
-    imgs.forEach(img => {
-      if (img) {
-        ctx.save();
-        roundRect(ctx, fx, y, flagW, flagH, 14); ctx.clip();
-        ctx.drawImage(img, fx, y, flagW, flagH);
-        ctx.restore();
-        ctx.strokeStyle = `rgba(${C.brassRGB},0.5)`; ctx.lineWidth = 2;
-        roundRect(ctx, fx, y, flagW, flagH, 14); ctx.stroke();
-      }
-      fx += flagW + gap;
+    let imgIdx = 0;
+    flagRows.forEach((row, rowIdx) => {
+      const rowW = row.length * flagW + (row.length - 1) * flagGap;
+      let fx = (W - rowW) / 2;
+      row.forEach(() => {
+        const img = imgs[imgIdx++];
+        if (img) {
+          ctx.save();
+          roundRect(ctx, fx, y, flagW, flagH, 12); ctx.clip();
+          ctx.drawImage(img, fx, y, flagW, flagH);
+          ctx.restore();
+          ctx.strokeStyle = `rgba(${C.brassRGB},0.5)`; ctx.lineWidth = 2;
+          roundRect(ctx, fx, y, flagW, flagH, 12); ctx.stroke();
+        }
+        fx += flagW + flagGap;
+      });
+      y += flagH + (rowIdx < flagRows.length - 1 ? flagGap : 60);
     });
-    if (countries.length > 5) {
-      ctx.textAlign = "left";
-      ctx.font = "800 40px 'Space Grotesk', sans-serif";
-      ctx.fillStyle = C.brass;
-      ctx.fillText(`+${countries.length - 5}`, fx + 14, y + 62);
-    }
-    y += flagH + 60;
 
     // Historial global — sin caja propia, flota igual que el resto de la tarjeta
     const covH = 190;
@@ -346,7 +367,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
     const [y, m, day] = d.split("-");
     const date = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(day)));
     const monthAbbr = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(date).toUpperCase().replace(".", "");
-    return `${parseInt(day)} ${monthAbbr}`;
+    return `${parseInt(day)} ${monthAbbr} ${y}`;
   }
 
   function wrapLeftText(ctx, text, x, y, maxWidth, lineHeight) {

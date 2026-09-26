@@ -11,4 +11,10 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 .flag-chip:hover { transform: translateY(-3px) scale(1.08); }
+
+/* Icono de medio de transporte en la tarjeta de viaje: un poco más grande en pantallas de escritorio */
+@media (min-width: 768px) {
+  .trip-mode-icon { padding: 12px !important; }
+  .trip-mode-icon svg { width: 24px !important; height: 24px !important; }
+}
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }

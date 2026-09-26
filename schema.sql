@@ -16,3 +16,5 @@ create policy "usuarios insertan sus viajes"
   on trips for insert with check (auth.uid() = user_id);
 create policy "usuarios borran sus viajes"
   on trips for delete using (auth.uid() = user_id);
+create policy "usuarios editan sus viajes"
+  on trips for update using (auth.uid() = user_id) with check (auth.uid() = user_id);

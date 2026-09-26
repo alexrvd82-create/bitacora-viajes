@@ -158,10 +158,12 @@ export default function TravelLog({ session }) {
     if (editingId) {
       const { data, error } = await supabase.from("trips").update(payload).eq("id", editingId).select().single();
       if (!error && data) { setTrips(prev => prev.map(t => (t.id === editingId ? data : t))); track("trip_edited", session.user.id); }
+      else if (error) console.error("Error al editar el viaje:", error);
       setEditingId(null);
     } else {
       const { data, error } = await supabase.from("trips").insert(payload).select().single();
       if (!error && data) { setTrips(prev => [data, ...prev]); track("trip_added", session.user.id); }
+      else if (error) console.error("Error al guardar el viaje:", error);
     }
     setStops(prev => (prev.length > 2 ? emptyStops() : prev.map(s => ({ ...s, city: "", lat: undefined, lon: undefined }))));
     setDate("");
@@ -282,16 +284,6 @@ export default function TravelLog({ session }) {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <LanguageSwitcher theme={{ ink, inkPanel, inkLine, textDim }} compact />
-                <div style={{ display: "flex", border: `1px solid ${inkLine}`, borderRadius: 14, height: 36, overflow: "hidden" }}>
-                  <button onClick={() => setUnit("km")} aria-label="Kilometers"
-                    style={{ padding: "0 10px", background: unit === "km" ? brass : "none", color: unit === "km" ? ink : textDim, border: "none", cursor: "pointer", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
-                    KM
-                  </button>
-                  <button onClick={() => setUnit("mi")} aria-label="Miles"
-                    style={{ padding: "0 10px", background: unit === "mi" ? brass : "none", color: unit === "mi" ? ink : textDim, border: "none", borderLeft: `1px solid ${inkLine}`, cursor: "pointer", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
-                    MI
-                  </button>
-                </div>
                 <button onClick={() => setDark(d => !d)} aria-label={t("changeTheme")}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: `1px solid ${inkLine}`, color: textDim, borderRadius: 14, width: 36, height: 36, cursor: "pointer" }}>
                   {dark ? <Sun size={15} /> : <Moon size={15} />}
@@ -427,11 +419,23 @@ export default function TravelLog({ session }) {
 
         {/* Km por medio */}
         <div style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 18, marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, letterSpacing: "0.1em", color: brass }}>{t("kmByMode")}</span>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: textDim }}>
-              {t("total")} <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{formatDist(stats.kmTotal)}</span>
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: textDim }}>
+                {t("total")} <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700, color: paper }}>{formatDist(stats.kmTotal)}</span>
+              </span>
+              <div style={{ display: "flex", border: `1px solid ${inkLine}`, borderRadius: 10, height: 26, overflow: "hidden", flexShrink: 0 }}>
+                <button onClick={() => setUnit("km")} aria-label="Kilometers"
+                  style={{ padding: "0 8px", background: unit === "km" ? brass : "none", color: unit === "km" ? ink : textDim, border: "none", cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
+                  KM
+                </button>
+                <button onClick={() => setUnit("mi")} aria-label="Miles"
+                  style={{ padding: "0 8px", background: unit === "mi" ? brass : "none", color: unit === "mi" ? ink : textDim, border: "none", borderLeft: `1px solid ${inkLine}`, cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>
+                  MI
+                </button>
+              </div>
+            </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
             {MODES.map(m => (
@@ -477,19 +481,24 @@ export default function TravelLog({ session }) {
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: textDim }}>
               {(() => {
                 const all = BADGE_FAMILIES.flatMap(f => f.thresholds);
-                const unlockedCount = BADGE_FAMILIES.reduce((sum, f) => sum + f.thresholds.filter(th => stats[f.statKey] >= th).length, 0);
+                const unlockedCount = BADGE_FAMILIES.reduce((sum, f) => sum + f.thresholds.filter(th => {
+                  const raw = stats[f.statKey] || 0;
+                  const val = f.isKm && unit === "mi" ? raw * 0.621371 : raw;
+                  return val >= th;
+                }).length, 0);
                 return `${unlockedCount}/${all.length}`;
               })()}
             </span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "flex-start" }}>
             {BADGE_FAMILIES.map(fam => fam.thresholds.map((threshold, tierIdx) => {
-              const value = stats[fam.statKey] || 0;
+              const rawValue = stats[fam.statKey] || 0;
+              const value = fam.isKm && unit === "mi" ? rawValue * 0.621371 : rawValue;
               const unlocked = value >= threshold;
               const tierColor = TIERS[Math.min(tierIdx, TIERS.length - 1)];
               const Icon = fam.icon;
               const label = fam.isKm
-                ? formatDist(threshold)
+                ? `${threshold.toLocaleString(locale)} ${unit}`
                 : fam.titleKey
                   ? `${threshold} ${t(fam.titleKey).toLowerCase()}`
                   : `${threshold} ${t(fam.labelKey)}`;
@@ -688,7 +697,7 @@ export default function TravelLog({ session }) {
                           {!isOpen && (
                             <div style={{ display: "flex", gap: 4, marginLeft: 2 }}>
                               {previewModes.map(m => (
-                                <div key={m.id} style={{ background: ink, borderRadius: 999, padding: 5, display: "flex" }}><m.Icon size={11} color={brass} /></div>
+                                <div key={m.id} style={{ background: ink, borderRadius: 999, padding: 6, display: "flex" }}><m.Icon size={14} color={brass} /></div>
                               ))}
                             </div>
                           )}
@@ -705,7 +714,7 @@ export default function TravelLog({ session }) {
                             const km = tripKm(trip);
                             return (
                               <div key={trip.id} style={{ background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                                <div style={{ background: ink, borderRadius: 999, padding: 8, display: "flex", flexShrink: 0 }}><M.Icon size={15} color={brass} /></div>
+                                <div className="trip-mode-icon" style={{ background: ink, borderRadius: 999, padding: 10, display: "flex", flexShrink: 0 }}><M.Icon size={20} color={brass} /></div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ fontSize: 14, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
                                     <MapPin size={11} color={textDim} />
