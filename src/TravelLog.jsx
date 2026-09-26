@@ -264,6 +264,19 @@ export default function TravelLog({ session }) {
     };
   }, [trips]);
 
+  // Puntos exactos de cada ciudad visitada (lat/lon reales), para marcarlos en el mapa
+  const cityPoints = useMemo(() => {
+    const seen = new Map();
+    trips.forEach(t => {
+      t.stops.forEach(s => {
+        if (s.lat == null || s.lon == null) return;
+        const key = `${s.city}, ${s.country}`;
+        if (!seen.has(key)) seen.set(key, { city: s.city, country: s.country, lat: s.lat, lon: s.lon });
+      });
+    });
+    return [...seen.values()];
+  }, [trips]);
+
   const gaugeStyle = { background: `conic-gradient(${brass} ${Math.min(stats.pctWorld, 100) * 3.6}deg, ${inkLine} 0deg)` };
 
   return (
@@ -573,6 +586,11 @@ export default function TravelLog({ session }) {
                     hoverinfo: "text", showscale: false,
                     colorscale: [[0, inkLine], [1, "#8a5c14"]],
                     marker: { line: { color: ink, width: 0.5 } },
+                  }, {
+                    type: "scattergeo", mode: "markers",
+                    lat: cityPoints.map(p => p.lat), lon: cityPoints.map(p => p.lon),
+                    text: cityPoints.map(p => `${p.city}, ${p.country}`), hoverinfo: "text",
+                    marker: { symbol: "star", size: 9, color: brass, line: { color: ink, width: 1 } },
                   }]}
                   layout={{
                     geo: { projection: { type: "natural earth" }, showframe: false, showcoastlines: false, showocean: true, oceancolor: ink, landcolor: inkLine, bgcolor: "transparent" },
