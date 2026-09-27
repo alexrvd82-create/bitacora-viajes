@@ -342,7 +342,7 @@ export default function TravelLog({ session }) {
                 style={{ background: "none", border: "none", color: textDim, opacity: 0.6, fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 }}>
                 {t("deleteDataLink")}
               </button>
-              <a href="https://paypal.me/proyectovb6" target="_blank" rel="noopener noreferrer"
+              <a href="https://ko-fi.com/arvd591522" target="_blank" rel="noopener noreferrer"
                 style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, padding: "7px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
                 <Coffee size={14} /> {t("invite_coffee")}
               </a>
