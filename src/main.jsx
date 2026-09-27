@@ -11,3 +11,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </LanguageProvider>
   </React.StrictMode>
 );
+
+// Registro del service worker de la PWA (solo en producción, con HTTPS)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.error("Error registrando el service worker:", err);
+    });
+  });
+}
