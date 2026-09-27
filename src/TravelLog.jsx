@@ -63,6 +63,7 @@ export default function TravelLog({ session }) {
     { id: "barco", label: t("modeBoat"), Icon: Ship },
   ];
   const [dark, setDark] = useState(() => localStorage.getItem("bitacora-theme") !== "light");
+  const [showDonate, setShowDonate] = useState(false);
   const [toast, setToast] = useState(null);
   useEffect(() => {
     if (!toast) return;
@@ -342,10 +343,26 @@ export default function TravelLog({ session }) {
                 style={{ background: "none", border: "none", color: textDim, opacity: 0.6, fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 }}>
                 {t("deleteDataLink")}
               </button>
-              <a href="https://ko-fi.com/arvd591522" target="_blank" rel="noopener noreferrer"
-                style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, padding: "7px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'IBM Plex Mono',monospace" }}>
-                <Coffee size={14} /> {t("invite_coffee")}
-              </a>
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setShowDonate(v => !v)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: ink, background: brass, border: "none", padding: "7px 14px", borderRadius: 999, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace" }}>
+                  <Coffee size={14} /> {t("invite_coffee")}
+                </button>
+                {showDonate && (
+                  <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, background: inkPanel, border: `1px solid ${inkLine}`, borderRadius: 12, padding: 6, display: "flex", flexDirection: "column", gap: 4, minWidth: 170, boxShadow: "0 6px 20px rgba(0,0,0,0.4)" }}>
+                    <a href="https://paypal.me/proyectovb6" target="_blank" rel="noopener noreferrer" onClick={() => setShowDonate(false)}
+                      style={{ display: "flex", flexDirection: "column", padding: "8px 10px", borderRadius: 8, textDecoration: "none", color: paper, fontSize: 12, fontWeight: 700 }}>
+                      PayPal
+                      <span style={{ fontSize: 10, fontWeight: 400, color: textDim }}>{t("donateMin1")}</span>
+                    </a>
+                    <a href="https://ko-fi.com/arvd591522" target="_blank" rel="noopener noreferrer" onClick={() => setShowDonate(false)}
+                      style={{ display: "flex", flexDirection: "column", padding: "8px 10px", borderRadius: 8, textDecoration: "none", color: paper, fontSize: 12, fontWeight: 700 }}>
+                      Ko-fi
+                      <span style={{ fontSize: 10, fontWeight: 400, color: textDim }}>{t("donateMin5")}</span>
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
