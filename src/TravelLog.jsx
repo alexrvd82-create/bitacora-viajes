@@ -461,7 +461,7 @@ export default function TravelLog({ session }) {
         </div>
 
         {/* Compartir resumen */}
-        <ShareCard trips={trips} theme={{ ink, inkPanel, inkLine, paper, brass, teal, textDim }} dark={dark} />
+        <ShareCard trips={trips} theme={{ ink, inkPanel, inkLine, paper, brass, teal, textDim }} dark={dark} unit={unit} />
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>

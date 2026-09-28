@@ -107,7 +107,7 @@ function drawModeIcon(ctx, mode, cx, cy, size, color) {
   ctx.restore();
 }
 
-export default function ShareCard({ trips, theme, dark = true }) {
+export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
   const { t, locale, lang } = useLanguage();
   const MODE_LABELS = {
     avion: t("modePlane").toUpperCase(),
@@ -220,13 +220,14 @@ export default function ShareCard({ trips, theme, dark = true }) {
     // KM total — número hero, grande, se autoajusta para no salirse
     ctx.textAlign = "center";
     ctx.fillStyle = C.brass;
-    const kmText = kmTotal.toLocaleString(locale);
+    const distFactor = unit === "mi" ? 0.621371 : 1;
+    const kmText = Math.round(kmTotal * distFactor).toLocaleString(locale);
     const kmSize = fitFontSize(ctx, kmText, 940, 260, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${kmSize}px 'Space Grotesk', sans-serif`;
     ctx.fillText(kmText, W / 2, y);
     ctx.fillStyle = C.textDim;
     ctx.font = "800 40px 'IBM Plex Mono', monospace";
-    ctx.fillText(t("cardKmTraveled"), W / 2, y + 66);
+    ctx.fillText(t(unit === "mi" ? "cardMiTraveled" : "cardKmTraveled"), W / 2, y + 66);
 
     const earthLoops = kmTotal / EARTH_CIRCUMFERENCE_KM;
     const equivText = kmTotal >= MOON_DISTANCE_KM
@@ -255,7 +256,7 @@ export default function ShareCard({ trips, theme, dark = true }) {
       roundRect(ctx, x, y, blockW, blockH, 22); ctx.stroke();
       ctx.textAlign = "center";
       drawModeIcon(ctx, m, x + blockW / 2, y + 68, 86, C.paper);
-      const modeKmText = kmByMode[m].toLocaleString(locale);
+      const modeKmText = Math.round(kmByMode[m] * distFactor).toLocaleString(locale);
       const modeKmSize = fitFontSize(ctx, modeKmText, blockW - 20, 46, s => `800 ${s}px 'Space Grotesk', sans-serif`);
       ctx.font = `800 ${modeKmSize}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = C.brass;
