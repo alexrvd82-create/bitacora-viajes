@@ -810,6 +810,10 @@ export default function TravelLog({ session }) {
             </div>
           )}
         </div>
+
+        <div style={{ textAlign: "center", marginTop: 32, fontSize: 11, color: textDim, opacity: 0.6, fontFamily: "'IBM Plex Mono',monospace" }}>
+          © 2026 ARVD
+        </div>
       </div>
     </div>
   );

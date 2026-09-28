@@ -85,6 +85,7 @@ export default function Landing({ onStart, onLogin }) {
 
         <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: `1px solid ${inkLine}` }}>
           <a href="/privacy.html" style={{ fontSize: 12, color: textDim, textDecoration: "underline" }}>Privacy Policy</a>
+          <div style={{ fontSize: 11, color: textDim, opacity: 0.6, marginTop: 10, fontFamily: "'IBM Plex Mono',monospace" }}>© 2026 ARVD</div>
         </div>
       </div>
     </div>

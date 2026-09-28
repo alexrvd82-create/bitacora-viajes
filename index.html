@@ -9,6 +9,13 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="theme-color" content="#0a0f1e">
+  <meta name="author" content="ARVD">
+  <meta name="copyright" content="© 2026 ARVD. All rights reserved.">
+  <style>
+    .boot-splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0a0f1e; }
+    .boot-splash img { width: min(70vw, 300px); height: auto; }
+    .boot-splash span { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); font: 500 12px 'IBM Plex Mono', monospace, sans-serif; letter-spacing: 0.08em; color: #94a3c4; opacity: 0.7; }
+  </style>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,7 +39,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div class="boot-splash">
+      <img src="/logo-v4.png" alt="Travel Mapping" />
+      <span>© 2026 ARVD</span>
+    </div>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

@@ -125,6 +125,9 @@ export default function Auth({ initialMode = "login", onBack }) {
           )}
         </div>
       </div>
+      <div style={{ textAlign: "center", marginTop: 20, fontSize: 11, color: "#94a3c4", opacity: 0.6, fontFamily: "'IBM Plex Mono',monospace" }}>
+        © 2026 ARVD
+      </div>
     </div>
   );
 }
