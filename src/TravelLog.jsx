@@ -161,7 +161,7 @@ export default function TravelLog({ session }) {
     const km = await computeTripKm(mode, resolvedStops);
     const payload = {
       user_id: session.user.id,
-      trip_date: date || null,
+      trip_date: date || new Date().toISOString().slice(0, 10),
       mode,
       round_trip: roundTrip,
       stops: resolvedStops,
