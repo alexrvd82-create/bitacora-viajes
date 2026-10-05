@@ -140,7 +140,12 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     const countrySet = new Set(), citySet = new Set();
     const kmByMode = { avion: 0, coche: 0, tren: 0, barco: 0 };
     filtered.forEach(t => {
-      t.stops.forEach(s => { countrySet.add(s.country); citySet.add(`${s.city}, ${s.country}`); });
+      // La primera parada de cada viaje es el origen (normalmente siempre el
+      // mismo país) — no cuenta como "país visitado" para no repetirlo tarjeta tras tarjeta.
+      t.stops.forEach((s, i) => {
+        if (i > 0) countrySet.add(s.country);
+        citySet.add(`${s.city}, ${s.country}`);
+      });
       const km = tripKm(t);
       if (km != null) kmByMode[t.mode] += km;
     });
@@ -158,14 +163,18 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     const flagsPerRow = Math.max(1, Math.floor((maxRowW + flagGap) / (flagW + flagGap)));
     const flagRows = [];
     for (let i = 0; i < countries.length; i += flagsPerRow) flagRows.push(countries.slice(i, i + flagsPerRow));
-    const extraFlagRows = Math.max(0, flagRows.length - 1);
 
     // Cobertura mundial de toda la vida (todos los viajes, no solo el rango de fechas elegido)
     const lifetimeCountrySet = new Set();
     trips.forEach(t => t.stops.forEach(s => lifetimeCountrySet.add(s.country)));
     const lifetimePct = (lifetimeCountrySet.size / TOTAL_COUNTRIES) * 100;
 
-    const W = 1080, H = 1920 + extraFlagRows * (flagH + flagGap);
+    // Alto del lienzo calculado a partir de dónde termina de verdad el
+    // contenido (690 inicial + bloques fijos + filas de banderas), para que
+    // el pie SIEMPRE quede justo debajo, sin solapes ni huecos de sobra.
+    const FOOTER_BLOCK_H = 280;
+    const contentEndY = 1756 + flagRows.length * flagH + (flagRows.length - 1) * flagGap;
+    const W = 1080, H = contentEndY + FOOTER_BLOCK_H;
     const canvas = canvasRef.current;
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
@@ -344,13 +353,13 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     ctx.textAlign = "center";
     ctx.font = "700 30px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText(t("footerTag"), W / 2, H - 220);
+    ctx.fillText(t("footerTag"), W / 2, contentEndY + 70);
     const urlColor = dark ? "#ffc857" : "#a0431e";
     const urlText = "https://bitacora-viajes-arvd.vercel.app";
     const urlSize = fitFontSize(ctx, urlText, W - 100, 44, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${urlSize}px 'Space Grotesk', sans-serif`;
     ctx.fillStyle = urlColor;
-    ctx.fillText(urlText, W / 2, H - 170);
+    ctx.fillText(urlText, W / 2, contentEndY + 130);
 
     setImgUrl(canvas.toDataURL("image/png"));
     setGenerating(false);
