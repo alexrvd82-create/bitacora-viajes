@@ -235,9 +235,10 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
       : earthLoops >= 1
         ? `🌍 ${earthLoops.toFixed(2)} ${t("equivWorld")}`
         : `🌍 ${Math.min(earthLoops * 100, 100).toFixed(1)}% ${t("equivWorldPct")}`;
-    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    const equivSize = fitFontSize(ctx, equivText, 900, 46, s => `700 ${s}px 'IBM Plex Mono', monospace`);
+    ctx.font = `700 ${equivSize}px 'IBM Plex Mono', monospace`;
     ctx.fillStyle = C.paper;
-    ctx.fillText(equivText, W / 2, y + 110);
+    ctx.fillText(equivText, W / 2, y + 112);
 
     y += 200;
 
@@ -332,22 +333,24 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     ctx.font = "800 96px 'Space Grotesk', sans-serif";
     ctx.fillStyle = C.brass;
     ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
-    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.font = "700 34px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.paper;
     ctx.fillText(`${lifetimeCountrySet.size}/${TOTAL_COUNTRIES} · ${t("worldCountries")}`, W / 2, y + 172);
     y += covH + 60;
 
-    // Pie
+    // Pie — con margen de seguridad generoso respecto al borde inferior, para
+    // que no quede tapado por los botones/iconos propios de Instagram u otras
+    // apps cuando la imagen se comparte como historia.
     ctx.textAlign = "center";
-    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.font = "700 30px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText(t("footerTag"), W / 2, H - 76);
+    ctx.fillText(t("footerTag"), W / 2, H - 220);
     const urlColor = dark ? "#ffc857" : "#a0431e";
     const urlText = "https://bitacora-viajes-arvd.vercel.app";
-    const urlSize = fitFontSize(ctx, urlText, W - 100, 40, s => `800 ${s}px 'Space Grotesk', sans-serif`);
+    const urlSize = fitFontSize(ctx, urlText, W - 100, 44, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${urlSize}px 'Space Grotesk', sans-serif`;
     ctx.fillStyle = urlColor;
-    ctx.fillText(urlText, W / 2, H - 30);
+    ctx.fillText(urlText, W / 2, H - 170);
 
     setImgUrl(canvas.toDataURL("image/png"));
     setGenerating(false);

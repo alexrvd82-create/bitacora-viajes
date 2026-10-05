@@ -103,7 +103,16 @@ export default function TravelLog({ session }) {
     return `${Math.round(value).toLocaleString(locale)} ${unit}`;
   }
 
-  useEffect(() => { loadTrips(); }, []);
+  const [isPro, setIsPro] = useState(false);
+  useEffect(() => {
+    loadTrips();
+    supabase.from("subscriptions").select("status").eq("user_id", session.user.id).maybeSingle()
+      .then(({ data }) => setIsPro(data?.status === "active"));
+  }, []);
+
+  const FREE_TRIP_LIMIT = 9;
+  const atFreeLimit = !isPro && trips.length >= FREE_TRIP_LIMIT;
+  const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/XXXXXXX"; // sustituye por tu Payment Link real
 
   async function loadTrips() {
     setLoading(true);
@@ -152,6 +161,7 @@ export default function TravelLog({ session }) {
 
   async function addTrip() {
     if (stops.some(s => !s.city.trim())) return;
+    if (!editingId && atFreeLimit) return; // sin editingId = viaje nuevo (editar uno existente siempre se permite)
     setSaving(true);
     const cleanStops = stops.map(s => ({
       country: s.country, city: s.city.trim(),
@@ -448,10 +458,22 @@ export default function TravelLog({ session }) {
           <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={t("notesPlaceholder")} rows={2} maxLength={500}
             style={{ width: "100%", background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 10, padding: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", marginBottom: 16 }} />
 
+          {atFreeLimit && !editingId && (
+            <div style={{ background: "rgba(197,138,48,0.12)", border: `1px solid ${brass}`, borderRadius: 10, padding: 12, marginBottom: 12, fontSize: 13 }}>
+              {t("freeLimitReached").replace("{n}", FREE_TRIP_LIMIT)}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-              {saving ? t("calculatingDistance") : editingId ? t("saveChanges") : t("registerTrip")}
-            </button>
+            {atFreeLimit && !editingId ? (
+              <a href={`${STRIPE_PAYMENT_LINK}?client_reference_id=${session.user.id}`} target="_blank" rel="noopener noreferrer"
+                style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block" }}>
+                {t("upgradeToPro")}
+              </a>
+            ) : (
+              <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                {saving ? t("calculatingDistance") : editingId ? t("saveChanges") : t("registerTrip")}
+              </button>
+            )}
             {editingId && (
               <button onClick={cancelEdit} style={{ padding: "11px 20px", background: "none", color: textDim, border: `1px solid ${inkLine}`, borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
                 {t("cancelEdit")}
@@ -779,7 +801,7 @@ export default function TravelLog({ session }) {
                                     {trip.stops.map((s, i) => (
                                       <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                         {i > 0 && <span style={{ color: brass }}>{trip.round_trip ? "↔" : "→"}</span>}
-                                        <span>{s.city}, {s.country}</span>
+                                        <span>{s.city}{i > 0 && `, ${s.country}`}</span>
                                       </span>
                                     ))}
                                   </div>
