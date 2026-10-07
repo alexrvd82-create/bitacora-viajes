@@ -355,7 +355,7 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     ctx.fillStyle = C.textDim;
     ctx.fillText(t("footerTag"), W / 2, contentEndY + 70);
     const urlColor = dark ? "#ffc857" : "#a0431e";
-    const urlText = "https://bitacora-viajes-arvd.vercel.app";
+    const urlText = "travel-mapping.app";
     const urlSize = fitFontSize(ctx, urlText, W - 100, 44, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${urlSize}px 'Space Grotesk', sans-serif`;
     ctx.fillStyle = urlColor;
