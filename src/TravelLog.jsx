@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense, Component } from "react";
-import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route, Pencil, Download } from "lucide-react";
+import { Plane, PlaneTakeoff, Car, TrainFront, Ship, Trash2, MapPin, Globe2, Plus, X, Trophy, Lock, LogOut, Sun, Moon, Coffee, ChevronDown, Building2, Flag, Route, Pencil, Download, Globe, Award, Anchor, Flame, Calendar, Compass, Snowflake } from "lucide-react";
 import { supabase } from "./supabaseClient";
 import { track } from "./analytics.js";
 import ShareCard from "./ShareCard.jsx";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 import LanguageSwitcher from "./i18n/LanguageSwitcher.jsx";
+import { bt } from "./badgeStrings.js";
 import {
   COUNTRIES, COUNTRY_MAP, CONTINENTS, CONT_TOTALS, TOTAL_COUNTRIES,
   flagUrl, tripKm, resolveStopCoords, computeTripKm, searchCities,
@@ -47,11 +48,29 @@ const BADGE_FAMILIES = [
   { id: "continents", icon: Globe2, statKey: "contsVisited", thresholds: [3, 6], unit: "/6", titleKey: "continents", descKey: "badgeDescContinents" },
   { id: "kmTotal", icon: Route, statKey: "kmTotal", thresholds: [10000, 50000, 100000, 500000, 1000000], unit: "km", isKm: true, descKey: "badgeDescKmTotal" },
   { id: "kmPlane", icon: Plane, statKey: "kmPlane", thresholds: [10000, 50000, 100000], unit: "km", isKm: true, modeLabelKey: "modePlane", descKey: "badgeDescKmMode" },
-  { id: "kmCar", icon: Car, statKey: "kmCar", thresholds: [10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeCar", descKey: "badgeDescKmMode" },
-  { id: "kmTrain", icon: TrainFront, statKey: "kmTrain", thresholds: [10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeTrain", descKey: "badgeDescKmMode" },
+  { id: "kmCar", icon: Car, statKey: "kmCar", thresholds: [1000, 10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeCar", descKey: "badgeDescKmMode" },
+  { id: "kmTrain", icon: TrainFront, statKey: "kmTrain", thresholds: [1000, 10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeTrain", descKey: "badgeDescKmMode" },
   { id: "kmBoat", icon: Ship, statKey: "kmBoat", thresholds: [1000, 5000], unit: "km", isKm: true, modeLabelKey: "modeBoat", descKey: "badgeDescKmMode" },
   { id: "flights", icon: PlaneTakeoff, statKey: "flightsCount", thresholds: [5, 10, 25, 50], unit: "", labelKey: "badgeFlightsLabel", descKey: "badgeDescFlights" },
   { id: "trips", icon: Trophy, statKey: "tripsCount", thresholds: [10, 25, 50, 100], unit: "", labelKey: "badgeTripsLabel", descKey: "badgeDescTrips" },
+  { id: "worldLaps", icon: Globe, statKey: "earthLoops", thresholds: [1, 5, 10], unit: "",
+    custom: { label: (n, l) => `${bt(l, "worldLap")} ×${n}`, sub: l => bt(l, "worldLapDesc") } },
+  { id: "moon", icon: Moon, statKey: "moonTrips", thresholds: [1, 2], unit: "",
+    custom: { label: (n, l) => bt(l, n === 1 ? "moon1" : "moon2"), sub: l => bt(l, "moonDesc") } },
+  { id: "contComplete", icon: Award, statKey: "contsCompleted", thresholds: [1, 2], unit: "",
+    custom: { label: (n, l) => n === 1 ? bt(l, "contComplete") : `${bt(l, "contComplete")} ×${n}`, sub: l => bt(l, "contCompleteDesc") } },
+  { id: "boatTrips", icon: Anchor, statKey: "boatCount", thresholds: [1, 5, 10], unit: "",
+    custom: { label: (n, l) => `${bt(l, "crossing")} ×${n}`, sub: l => bt(l, "crossingDesc") } },
+  { id: "streak", icon: Flame, statKey: "monthStreak", thresholds: [3, 6, 12], unit: "",
+    custom: { label: (n, l) => `${n} ${bt(l, "streak")}`, sub: l => bt(l, "streakDesc") } },
+  { id: "everyMonth", icon: Calendar, statKey: "yearMonths", thresholds: [12], unit: "",
+    custom: { label: (n, l) => bt(l, "everyMonth"), sub: l => bt(l, "everyMonthDesc") } },
+  { id: "twoCont", icon: Compass, statKey: "twoContDays", thresholds: [1], unit: "",
+    custom: { label: (n, l) => bt(l, "twoCont"), sub: l => bt(l, "twoContDesc") } },
+  { id: "arctic", icon: Snowflake, statKey: "arcticReached", thresholds: [1], unit: "",
+    custom: { label: (n, l) => bt(l, "arctic"), sub: l => bt(l, "arcticDesc") } },
+  { id: "hemis", icon: Sun, statKey: "bothHemispheres", thresholds: [1], unit: "",
+    custom: { label: (n, l) => bt(l, "hemis"), sub: l => bt(l, "hemisDesc") } },
 ];
 
 export default function TravelLog({ session }) {
@@ -110,7 +129,7 @@ export default function TravelLog({ session }) {
       .then(({ data }) => setIsPro(data?.status === "active"));
   }, []);
 
-  const FREE_TRIP_LIMIT = 9;
+  const FREE_TRIP_LIMIT = 5;
   const atFreeLimit = !isPro && trips.length >= FREE_TRIP_LIMIT;
   const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/XXXXXXX"; // sustituye por tu Payment Link real
 
@@ -278,6 +297,38 @@ export default function TravelLog({ session }) {
     const flightsCount = trips.filter(t => t.mode === "avion").length;
     const co2Kg = Object.entries(kmByMode).reduce((sum, [m, km]) => sum + (km * (CO2_FACTORS_G_PER_KM[m] || 0)) / 1000, 0);
     const earthLoops = kmTotal / EARTH_CIRCUMFERENCE_KM;
+    const moonTrips = kmTotal / MOON_DISTANCE_KM;
+    const contsCompleted = CONTINENTS.filter(c => contCounts[c.code].size >= CONT_TOTALS[c.code]).length;
+    const boatCount = trips.filter(t => t.mode === "barco").length;
+    const monthIdx = new Set();
+    const monthsByYear = {};
+    const contsByDate = {};
+    let maxLat = -91, minLat = 91;
+    trips.forEach(t => {
+      const d = typeof t.trip_date === "string" ? t.trip_date.slice(0, 10) : "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        const y = +d.slice(0, 4), m = +d.slice(5, 7);
+        monthIdx.add(y * 12 + (m - 1));
+        (monthsByYear[y] = monthsByYear[y] || new Set()).add(m);
+        const set = (contsByDate[d] = contsByDate[d] || new Set());
+        t.stops.forEach(s => { const c = COUNTRY_MAP[s.country]; if (c) set.add(c.cont); });
+      }
+      t.stops.forEach(s => {
+        if (s.lat == null) return;
+        if (s.lat > maxLat) maxLat = s.lat;
+        if (s.lat < minLat) minLat = s.lat;
+      });
+    });
+    let monthStreak = 0, run = 0, prevIdx = null;
+    [...monthIdx].sort((a, b) => a - b).forEach(i => {
+      run = prevIdx !== null && i === prevIdx + 1 ? run + 1 : 1;
+      prevIdx = i;
+      if (run > monthStreak) monthStreak = run;
+    });
+    const yearMonths = Math.max(0, ...Object.values(monthsByYear).map(x => x.size));
+    const twoContDays = Object.values(contsByDate).filter(x => x.size >= 2).length;
+    const arcticReached = maxLat >= 66.5 ? 1 : 0;
+    const bothHemispheres = minLat < 0 && maxLat > 0 ? 1 : 0;
     const moonPct = (kmTotal / MOON_DISTANCE_KM) * 100;
     return {
       countries: countrySet, cities: citySet, kmByMode, kmTotal, contCounts, flightsCount,
@@ -285,6 +336,7 @@ export default function TravelLog({ session }) {
       citiesCount: citySet.size, countriesCount: countrySet.size, tripsCount: trips.length,
       kmPlane: kmByMode.avion, kmCar: kmByMode.coche, kmTrain: kmByMode.tren, kmBoat: kmByMode.barco,
       co2Kg, earthLoops, moonPct,
+      moonTrips, contsCompleted, boatCount, monthStreak, yearMonths, twoContDays, arcticReached, bothHemispheres,
     };
   }, [trips]);
 
@@ -572,12 +624,14 @@ export default function TravelLog({ session }) {
               const unlocked = value >= threshold;
               const tierColor = TIERS[Math.min(tierIdx, TIERS.length - 1)];
               const Icon = fam.icon;
-              const label = fam.isKm
+              const label = fam.custom
+                ? fam.custom.label(threshold, locale)
+                : fam.isKm
                 ? `${threshold.toLocaleString(locale)} ${unit}`
                 : fam.titleKey
                   ? `${threshold} ${t(fam.titleKey).toLowerCase()}`
                   : `${threshold} ${t(fam.labelKey)}`;
-              const sub = fam.modeLabelKey ? t(fam.modeLabelKey) : (fam.descKey ? t(fam.descKey) : "");
+              const sub = fam.custom ? fam.custom.sub(locale) : fam.modeLabelKey ? t(fam.modeLabelKey) : (fam.descKey ? t(fam.descKey) : "");
               return (
                 <div key={`${fam.id}-${threshold}`} title={`${label}${sub ? " · " + sub : ""}`}
                   style={{ width: 64, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: unlocked ? 1 : 0.45 }}>
@@ -589,7 +643,7 @@ export default function TravelLog({ session }) {
                   }}>
                     {unlocked ? <Icon size={19} color={tierColor} /> : <Lock size={14} color={textDim} />}
                   </div>
-                  <div style={{ fontSize: 8, textAlign: "center", lineHeight: 1.15, fontFamily: "'IBM Plex Mono',monospace", color: unlocked ? paper : textDim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
+                  <div style={{ fontSize: 8, textAlign: "center", lineHeight: 1.15, fontFamily: "'IBM Plex Mono',monospace", color: unlocked ? paper : textDim, whiteSpace: fam.custom ? "normal" : "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
                     {label}
                   </div>
                 </div>
