@@ -46,12 +46,10 @@ const BADGE_FAMILIES = [
   { id: "cities", icon: Building2, statKey: "citiesCount", thresholds: [10, 25, 50, 100], unit: "", titleKey: "cities", descKey: "badgeDescCities" },
   { id: "countries", icon: Flag, statKey: "countriesCount", thresholds: [10, 25, 50, 100], unit: "", titleKey: "countries", descKey: "badgeDescCountries" },
   { id: "continents", icon: Globe2, statKey: "contsVisited", thresholds: [3, 6], unit: "/6", titleKey: "continents", descKey: "badgeDescContinents" },
-  { id: "kmTotal", icon: Route, statKey: "kmTotal", thresholds: [10000, 50000, 100000, 500000, 1000000], unit: "km", isKm: true, descKey: "badgeDescKmTotal" },
+  { id: "kmTotal", icon: Route, statKey: "kmTotal", thresholds: [10000, 100000, 1000000], unit: "km", isKm: true, descKey: "badgeDescKmTotal" },
   { id: "kmPlane", icon: Plane, statKey: "kmPlane", thresholds: [10000, 50000, 100000], unit: "km", isKm: true, modeLabelKey: "modePlane", descKey: "badgeDescKmMode" },
   { id: "kmCar", icon: Car, statKey: "kmCar", thresholds: [1000, 10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeCar", descKey: "badgeDescKmMode" },
   { id: "kmTrain", icon: TrainFront, statKey: "kmTrain", thresholds: [1000, 10000, 50000], unit: "km", isKm: true, modeLabelKey: "modeTrain", descKey: "badgeDescKmMode" },
-  { id: "kmBoat", icon: Ship, statKey: "kmBoat", thresholds: [1000, 5000], unit: "km", isKm: true, modeLabelKey: "modeBoat", descKey: "badgeDescKmMode" },
-  { id: "flights", icon: PlaneTakeoff, statKey: "flightsCount", thresholds: [5, 10, 25, 50], unit: "", labelKey: "badgeFlightsLabel", descKey: "badgeDescFlights" },
   { id: "trips", icon: Trophy, statKey: "tripsCount", thresholds: [10, 25, 50, 100], unit: "", labelKey: "badgeTripsLabel", descKey: "badgeDescTrips" },
   { id: "worldLaps", icon: Globe, statKey: "earthLoops", thresholds: [1, 5, 10], unit: "",
     custom: { label: (n, l) => `${bt(l, "worldLap")} ×${n}`, sub: l => bt(l, "worldLapDesc") } },
@@ -127,18 +125,29 @@ export default function TravelLog({ session }) {
     loadTrips();
     supabase.from("subscriptions").select("status").eq("user_id", session.user.id).maybeSingle()
       .then(({ data }) => setIsPro(data?.status === "active"));
+    // Si la sesión se renueva después de montar la pantalla, se vuelven a pedir los viajes
+    const { data: authSub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") loadTrips(1);
+    });
+    return () => authSub?.subscription?.unsubscribe();
   }, []);
 
   const FREE_TRIP_LIMIT = 5;
   const atFreeLimit = !isPro && trips.length >= FREE_TRIP_LIMIT;
-  const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/XXXXXXX"; // sustituye por tu Payment Link real
+  const KOFI_PRO_LINK = "https://ko-fi.com/s/81275b779b"; // Travel-Mapping PRO (pago único en Ko-fi)
 
-  async function loadTrips() {
-    setLoading(true);
+  async function loadTrips(attempt = 0) {
+    if (attempt === 0) setLoading(true);
     const { data, error } = await supabase
       .from("trips")
       .select("*")
+      .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
+    // Si falla (o llega vacío en el primer intento, p. ej. sesión aún sin lista), se reintenta en silencio
+    if ((error || (data || []).length === 0) && attempt < (error ? 3 : 1)) {
+      setTimeout(() => loadTrips(attempt + 1), 900 * (attempt + 1));
+      return;
+    }
     if (!error) setTrips(data || []);
     setLoading(false);
   }
@@ -517,7 +526,7 @@ export default function TravelLog({ session }) {
           )}
           <div style={{ display: "flex", gap: 10 }}>
             {atFreeLimit && !editingId ? (
-              <a href={`${STRIPE_PAYMENT_LINK}?client_reference_id=${session.user.id}`} target="_blank" rel="noopener noreferrer"
+              <a href={KOFI_PRO_LINK} target="_blank" rel="noopener noreferrer"
                 style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block" }}>
                 {t("upgradeToPro")}
               </a>
