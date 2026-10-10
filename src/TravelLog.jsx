@@ -813,13 +813,19 @@ export default function TravelLog({ session }) {
           ) : (
             <div>
               {(() => {
+                // Más reciente primero (por fecha del viaje; los que no tienen fecha, al final)
+                const byDateDesc = [...trips].sort((x, y) =>
+                  (y.trip_date || "").localeCompare(x.trip_date || "") ||
+                  String(y.created_at || "").localeCompare(String(x.created_at || "")));
                 const groups = {};
-                for (const trip of trips) {
+                for (const trip of byDateDesc) {
                   const destCountry = COUNTRY_MAP[trip.stops[trip.stops.length - 1]?.country];
                   const code = destCountry?.cont || "OTHER";
                   (groups[code] = groups[code] || []).push(trip);
                 }
-                const orderedCodes = [...CONTINENTS.map(c => c.code), "OTHER"].filter(code => groups[code]?.length);
+                // Los continentes también van por orden: primero el que tiene el viaje más reciente
+                const orderedCodes = [...CONTINENTS.map(c => c.code), "OTHER"].filter(code => groups[code]?.length)
+                  .sort((c1, c2) => (groups[c2][0].trip_date || "").localeCompare(groups[c1][0].trip_date || ""));
                 return orderedCodes.map(code => {
                   const contTrips = groups[code];
                   const isOpen = !!expandedRouteConts[code];
