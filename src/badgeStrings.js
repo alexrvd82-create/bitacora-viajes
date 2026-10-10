@@ -4,7 +4,7 @@ const D = {
   en: {
     cardYear: "This year", cardAll: "All time",
     capitalsCard: "CAPITALS", continentsCard: "CONTINENTS",
-    proLimit: "You've reached the limit of {n} free trips. Go Pro for €1.99, for life.", proCta: "Go Pro",
+    proLimit: "You've reached the limit of {n} free trips. Go Pro for $1.99, for life.", proCta: "Go Pro",
     worldLap: "World lap", worldLapDesc: "Each lap = 40,075 km",
     moon1: "Trip to the Moon", moon2: "Round trip to the Moon", moonDesc: "384,400 km each way",
     contComplete: "Continent completed", contCompleteDesc: "Every country of a continent visited",
@@ -18,7 +18,7 @@ const D = {
   es: {
     cardYear: "Este año", cardAll: "Toda la vida",
     capitalsCard: "CAPITALES", continentsCard: "CONTINENTES",
-    proLimit: "Has alcanzado el límite de {n} registros gratuitos. Hazte Pro por 1,99 € de por vida.", proCta: "Hazte Pro",
+    proLimit: "Has alcanzado el límite de {n} registros gratuitos. Hazte Pro por 1,99 $ de por vida.", proCta: "Hazte Pro",
     worldLap: "Vuelta al mundo", worldLapDesc: "Cada vuelta = 40.075 km",
     moon1: "Ida a la Luna", moon2: "Ida y vuelta a la Luna", moonDesc: "384.400 km por trayecto",
     contComplete: "Continente completo", contCompleteDesc: "Todos los países de un continente",
@@ -32,7 +32,7 @@ const D = {
   fr: {
     cardYear: "Cette année", cardAll: "Toute la vie",
     capitalsCard: "CAPITALES", continentsCard: "CONTINENTS",
-    proLimit: "Vous avez atteint la limite de {n} voyages gratuits. Passez Pro pour 1,99 €, à vie.", proCta: "Passer Pro",
+    proLimit: "Vous avez atteint la limite de {n} voyages gratuits. Passez Pro pour 1,99 $, à vie.", proCta: "Passer Pro",
     worldLap: "Tour du monde", worldLapDesc: "Chaque tour = 40 075 km",
     moon1: "Voyage vers la Lune", moon2: "Aller-retour vers la Lune", moonDesc: "384 400 km par trajet",
     contComplete: "Continent complété", contCompleteDesc: "Tous les pays d'un continent",
@@ -46,7 +46,7 @@ const D = {
   de: {
     cardYear: "Dieses Jahr", cardAll: "Gesamt",
     capitalsCard: "HAUPTSTÄDTE", continentsCard: "KONTINENTE",
-    proLimit: "Du hast das Limit von {n} kostenlosen Einträgen erreicht. Werde Pro für 1,99 € – für immer.", proCta: "Pro werden",
+    proLimit: "Du hast das Limit von {n} kostenlosen Einträgen erreicht. Werde Pro für 1,99 $ – für immer.", proCta: "Pro werden",
     worldLap: "Weltumrundung", worldLapDesc: "Jede Runde = 40.075 km",
     moon1: "Reise zum Mond", moon2: "Hin und zurück zum Mond", moonDesc: "384.400 km pro Strecke",
     contComplete: "Kontinent komplett", contCompleteDesc: "Alle Länder eines Kontinents",
@@ -60,7 +60,7 @@ const D = {
   pt: {
     cardYear: "Este ano", cardAll: "Toda a vida",
     capitalsCard: "CAPITAIS", continentsCard: "CONTINENTES",
-    proLimit: "Você atingiu o limite de {n} registros gratuitos. Torne-se Pro por 1,99 € para sempre.", proCta: "Torne-se Pro",
+    proLimit: "Você atingiu o limite de {n} registros gratuitos. Torne-se Pro por 1,99 $ para sempre.", proCta: "Torne-se Pro",
     worldLap: "Volta ao mundo", worldLapDesc: "Cada volta = 40.075 km",
     moon1: "Viagem à Lua", moon2: "Ida e volta à Lua", moonDesc: "384.400 km por trajeto",
     contComplete: "Continente completo", contCompleteDesc: "Todos os países de um continente",
@@ -74,7 +74,7 @@ const D = {
   it: {
     cardYear: "Quest'anno", cardAll: "Di sempre",
     capitalsCard: "CAPITALI", continentsCard: "CONTINENTI",
-    proLimit: "Hai raggiunto il limite di {n} registri gratuiti. Passa a Pro per 1,99 €, per sempre.", proCta: "Passa a Pro",
+    proLimit: "Hai raggiunto il limite di {n} registri gratuiti. Passa a Pro per 1,99 $, per sempre.", proCta: "Passa a Pro",
     worldLap: "Giro del mondo", worldLapDesc: "Ogni giro = 40.075 km",
     moon1: "Viaggio sulla Luna", moon2: "Andata e ritorno sulla Luna", moonDesc: "384.400 km per tratta",
     contComplete: "Continente completo", contCompleteDesc: "Tutti i paesi di un continente",
@@ -88,7 +88,7 @@ const D = {
   zh: {
     cardYear: "今年", cardAll: "全部时间",
     capitalsCard: "首都", continentsCard: "大洲",
-    proLimit: "你已达到 {n} 条免费记录的上限。仅需 1.99 欧元，终身升级 Pro。", proCta: "升级 Pro",
+    proLimit: "你已达到 {n} 条免费记录的上限。仅需 1.99 美元，终身升级 Pro。", proCta: "升级 Pro",
     worldLap: "环球旅行", worldLapDesc: "每圈 = 40,075 公里",
     moon1: "登月之旅", moon2: "往返月球", moonDesc: "单程 384,400 公里",
     contComplete: "完成一个大洲", contCompleteDesc: "游遍一个大洲的所有国家",
@@ -102,7 +102,7 @@ const D = {
   ja: {
     cardYear: "今年", cardAll: "これまで全部",
     capitalsCard: "首都", continentsCard: "大陸",
-    proLimit: "無料の記録の上限（{n}件）に達しました。1.99ユーロで一生Proに。", proCta: "Proにする",
+    proLimit: "無料の記録の上限（{n}件）に達しました。1.99ドルで一生Proに。", proCta: "Proにする",
     worldLap: "世界一周", worldLapDesc: "1周 = 40,075 km",
     moon1: "月への旅", moon2: "月への往復", moonDesc: "片道 384,400 km",
     contComplete: "大陸を制覇", contCompleteDesc: "ある大陸のすべての国を訪問",
@@ -116,7 +116,7 @@ const D = {
   hi: {
     cardYear: "इस साल", cardAll: "अब तक सब",
     capitalsCard: "राजधानियाँ", continentsCard: "महाद्वीप",
-    proLimit: "आप {n} मुफ़्त रिकॉर्ड की सीमा तक पहुँच गए हैं। सिर्फ़ €1.99 में आजीवन Pro बनें।", proCta: "Pro बनें",
+    proLimit: "आप {n} मुफ़्त रिकॉर्ड की सीमा तक पहुँच गए हैं। सिर्फ़ $1.99 में आजीवन Pro बनें।", proCta: "Pro बनें",
     worldLap: "विश्व परिक्रमा", worldLapDesc: "हर चक्कर = 40,075 किमी",
     moon1: "चाँद की यात्रा", moon2: "चाँद की आना-जाना यात्रा", moonDesc: "एक तरफ़ 384,400 किमी",
     contComplete: "महाद्वीप पूरा", contCompleteDesc: "एक महाद्वीप के सभी देश",
@@ -130,7 +130,7 @@ const D = {
   ar: {
     cardYear: "هذا العام", cardAll: "كل الوقت",
     capitalsCard: "العواصم", continentsCard: "القارات",
-    proLimit: "لقد وصلت إلى حد {n} سجلات مجانية. احصل على Pro مدى الحياة مقابل 1.99 يورو.", proCta: "احصل على Pro",
+    proLimit: "لقد وصلت إلى حد {n} سجلات مجانية. احصل على Pro مدى الحياة مقابل 1.99 دولار.", proCta: "احصل على Pro",
     worldLap: "حول العالم", worldLapDesc: "كل لفة = 40,075 كم",
     moon1: "رحلة إلى القمر", moon2: "ذهاب وعودة إلى القمر", moonDesc: "384,400 كم في الاتجاه الواحد",
     contComplete: "قارة مكتملة", contCompleteDesc: "كل دول القارة",
@@ -144,7 +144,7 @@ const D = {
   ru: {
     cardYear: "Этот год", cardAll: "За всё время",
     capitalsCard: "СТОЛИЦЫ", continentsCard: "КОНТИНЕНТЫ",
-    proLimit: "Вы достигли лимита в {n} бесплатных записей. Станьте Pro за 1,99 € — навсегда.", proCta: "Стать Pro",
+    proLimit: "Вы достигли лимита в {n} бесплатных записей. Станьте Pro за 1,99 $ — навсегда.", proCta: "Стать Pro",
     worldLap: "Кругосветка", worldLapDesc: "Каждый круг = 40 075 км",
     moon1: "Путь на Луну", moon2: "Туда и обратно на Луну", moonDesc: "384 400 км в одну сторону",
     contComplete: "Континент пройден", contCompleteDesc: "Все страны континента",
@@ -158,7 +158,7 @@ const D = {
   ko: {
     cardYear: "올해", cardAll: "전체 기간",
     capitalsCard: "수도", continentsCard: "대륙",
-    proLimit: "무료 기록 {n}개 한도에 도달했습니다. 1.99유로로 평생 Pro가 되세요.", proCta: "Pro 시작하기",
+    proLimit: "무료 기록 {n}개 한도에 도달했습니다. 1.99달러로 평생 Pro가 되세요.", proCta: "Pro 시작하기",
     worldLap: "세계 일주", worldLapDesc: "1바퀴 = 40,075 km",
     moon1: "달 여행", moon2: "달 왕복", moonDesc: "편도 384,400 km",
     contComplete: "대륙 완주", contCompleteDesc: "한 대륙의 모든 나라",
