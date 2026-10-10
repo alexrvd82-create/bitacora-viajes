@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { Share2, Download, Image as ImageIcon } from "lucide-react";
-import { COUNTRY_MAP, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
+import { COUNTRY_MAP, CONTINENTS, tripKm, flagUrl, TOTAL_COUNTRIES } from "./data.js";
+import { visitedCapitals } from "./capitals.js";
+import { bt } from "./badgeStrings.js";
 import { track } from "./analytics.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
@@ -129,21 +131,38 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     return true;
   });
 
-  async function generate() {
+  function pad2(n) { return String(n).padStart(2, "0"); }
+  function ytdRange() {
+    const now = new Date();
+    return { from: `${now.getFullYear()}-01-01`, to: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}` };
+  }
+  // kind: "dates" = rango elegido · "ytd" = lo que va de año · "all" = toda la vida (incluye viajes sin fecha)
+  function pickTrips(kind) {
+    if (kind === "all") return trips;
+    if (kind === "ytd") {
+      const { from, to } = ytdRange();
+      return trips.filter(x => x.trip_date && x.trip_date >= from && x.trip_date <= to);
+    }
+    return filtered;
+  }
+
+  async function generate(kind = "dates") {
     setGenerating(true);
+    const cardTrips = pickTrips(kind);
     try {
       await document.fonts.load('800 100px "Space Grotesk"');
       await document.fonts.ready;
     } catch (e) { /* si falla, sigue con la fuente por defecto */ }
     const C = CARD_THEMES[dark ? "dark" : "light"];
-    const sortedTrips = [...filtered].sort((a, b) => (a.trip_date || "").localeCompare(b.trip_date || ""));
+    const sortedTrips = [...cardTrips].sort((a, b) => (a.trip_date || "").localeCompare(b.trip_date || ""));
     const countrySet = new Set(), citySet = new Set();
     const kmByMode = { avion: 0, coche: 0, tren: 0, barco: 0 };
-    filtered.forEach(t => {
+    cardTrips.forEach(t => {
       // La primera parada de cada viaje es el origen (normalmente siempre el
       // mismo país) — no cuenta como "país visitado" para no repetirlo tarjeta tras tarjeta.
       t.stops.forEach((s, i) => {
-        if (i > 0) countrySet.add(s.country);
+        // En la tarjeta "total" se cuentan todos los países (incluido el de origen), igual que el historial global
+        if (i > 0 || kind === "all") countrySet.add(s.country);
         citySet.add(`${s.city}, ${s.country}`);
       });
       const km = tripKm(t);
@@ -168,12 +187,13 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     const lifetimeCountrySet = new Set();
     trips.forEach(t => t.stops.forEach(s => lifetimeCountrySet.add(s.country)));
     const lifetimePct = (lifetimeCountrySet.size / TOTAL_COUNTRIES) * 100;
+    const lifetimeContinents = new Set([...lifetimeCountrySet].map(n => COUNTRY_MAP[n]?.cont).filter(Boolean)).size;
 
     // Alto del lienzo calculado a partir de dónde termina de verdad el
     // contenido (690 inicial + bloques fijos + filas de banderas), para que
     // el pie SIEMPRE quede justo debajo, sin solapes ni huecos de sobra.
     const FOOTER_BLOCK_H = 280;
-    const contentEndY = 1756 + flagRows.length * flagH + (flagRows.length - 1) * flagGap;
+    const contentEndY = 2056 + flagRows.length * flagH + (flagRows.length - 1) * flagGap;
     const W = 1080, H = contentEndY + FOOTER_BLOCK_H;
     const canvas = canvasRef.current;
     canvas.width = W; canvas.height = H;
@@ -212,9 +232,12 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
 
     // Rango de fechas, tipografía grande moderna
     ctx.fillStyle = C.paper;
-    const rangeText = start && end
-      ? `${fmtDate(start)} — ${fmtDate(end)}`
-      : sortedTrips.length ? `${fmtDate(sortedTrips[0].trip_date)} — ${fmtDate(sortedTrips[sortedTrips.length - 1].trip_date)}` : t("myTrip");
+    const datedSorted = sortedTrips.filter(x => x.trip_date);
+    const rangeText = kind === "ytd"
+      ? `${fmtDate(ytdRange().from)} — ${fmtDate(ytdRange().to)}`
+      : kind === "dates" && start && end
+        ? `${fmtDate(start)} — ${fmtDate(end)}`
+        : datedSorted.length ? `${fmtDate(datedSorted[0].trip_date)} — ${fmtDate(datedSorted[datedSorted.length - 1].trip_date)}` : t("myTrip");
     const rangeSize = fitFontSize(ctx, rangeText, 900, 108, s => `800 ${s}px 'Space Grotesk', sans-serif`);
     ctx.font = `800 ${rangeSize}px 'Space Grotesk', sans-serif`;
     wrapLeftText(ctx, rangeText, 70, 250, 940, rangeSize * 1.15);
@@ -236,7 +259,7 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     ctx.fillText(kmText, W / 2, y);
     ctx.fillStyle = C.textDim;
     ctx.font = "800 40px 'IBM Plex Mono', monospace";
-    ctx.fillText(t(unit === "mi" ? "cardMiTraveled" : "cardKmTraveled"), W / 2, y + 66);
+    ctx.fillText(t(unit === "mi" ? "cardMiTraveled" : "cardKmTraveled"), W / 2, y + 72);
 
     const earthLoops = kmTotal / EARTH_CIRCUMFERENCE_KM;
     const equivText = kmTotal >= MOON_DISTANCE_KM
@@ -247,9 +270,9 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
     const equivSize = fitFontSize(ctx, equivText, 900, 46, s => `700 ${s}px 'IBM Plex Mono', monospace`);
     ctx.font = `700 ${equivSize}px 'IBM Plex Mono', monospace`;
     ctx.fillStyle = C.paper;
-    ctx.fillText(equivText, W / 2, y + 112);
+    ctx.fillText(equivText, W / 2, y + 130);
 
-    y += 200;
+    y += 230;
 
     // Chips de km por medio
     const modes = ["avion", "coche", "tren", "barco"].filter(m => kmByMode[m] > 0);
@@ -275,16 +298,18 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
       ctx.fillStyle = C.textDim;
       ctx.fillText(MODE_LABELS[m], x + blockW / 2, y + 188);
     });
-    y += blockH + 110;
+    y += blockH + 140;
 
     // Países / ciudades / tramos
     const mint = "#5fd4c4", coral = "#e8916a";
+    const capitalSet = visitedCapitals(cardTrips, { skipOrigin: kind !== "all" });
     const stats = [
       { value: countrySet.size, label: t("countries"), accent: C.brass },
+      { value: capitalSet.size, label: bt(locale, "capitalsCard"), accent: "#a99cf5" },
       { value: citySet.size, label: t("cities"), accent: mint },
-      { value: filtered.length, label: t("shareTrayectos"), accent: coral },
+      { value: cardTrips.length, label: t("shareTrayectos"), accent: coral },
     ];
-    const sW = (W - 160) / 3;
+    const sW = (W - 160) / stats.length;
     stats.forEach((s, i) => {
       const x = 80 + i * sW + sW / 2;
       ctx.textAlign = "center";
@@ -293,22 +318,27 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
       ctx.font = "800 96px 'Space Grotesk', sans-serif";
       ctx.fillStyle = C.paper;
       ctx.fillText(s.value, x, y);
-      ctx.font = "800 29px 'IBM Plex Mono', monospace";
+      let lblSize = 29;
+      ctx.font = `800 ${lblSize}px 'IBM Plex Mono', monospace`;
+      while (lblSize > 16 && ctx.measureText(s.label).width > sW - 16) {
+        lblSize -= 1;
+        ctx.font = `800 ${lblSize}px 'IBM Plex Mono', monospace`;
+      }
       ctx.fillStyle = C.textDim;
-      ctx.fillText(s.label, x, y + 42);
+      ctx.fillText(s.label, x, y + 50);
     });
-    y += 110;
+    y += 130;
 
     ctx.strokeStyle = C.inkLine; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(140, y); ctx.lineTo(W - 140, y); ctx.stroke();
-    y += 70;
+    y += 90;
 
     // Países visitados, con banderas
     ctx.font = "800 31px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
     ctx.textAlign = "center";
     ctx.fillText(t("visitedInPeriod"), W / 2, y);
-    y += 56;
+    y += 76;
 
     const imgs = await Promise.all(countries.map(name => {
       const c = COUNTRY_MAP[name];
@@ -330,21 +360,24 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
         }
         fx += flagW + flagGap;
       });
-      y += flagH + (rowIdx < flagRows.length - 1 ? flagGap : 60);
+      y += flagH + (rowIdx < flagRows.length - 1 ? flagGap : 90);
     });
 
     // Historial global — sin caja propia, flota igual que el resto de la tarjeta
-    const covH = 190;
+    const covH = 340;
     ctx.textAlign = "center";
     ctx.font = "800 26px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.textDim;
-    ctx.fillText(t("globalHistory"), W / 2, y + 48);
+    ctx.fillText(t("globalHistory"), W / 2, y + 50);
     ctx.font = "800 96px 'Space Grotesk', sans-serif";
     ctx.fillStyle = C.brass;
-    ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 138);
+    ctx.fillText(`${lifetimePct.toFixed(1)}%`, W / 2, y + 170);
     ctx.font = "700 34px 'IBM Plex Mono', monospace";
     ctx.fillStyle = C.paper;
-    ctx.fillText(`${lifetimeCountrySet.size}/${TOTAL_COUNTRIES} · ${t("worldCountries")}`, W / 2, y + 172);
+    ctx.fillText(`${lifetimeCountrySet.size}/${TOTAL_COUNTRIES} · ${t("worldCountries")}`, W / 2, y + 252);
+    ctx.font = "700 26px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = C.textDim;
+    ctx.fillText(`${lifetimeContinents}/${CONTINENTS.length} · ${bt(locale, "continentsCard")}`, W / 2, y + 308);
     y += covH + 60;
 
     // Pie — con margen de seguridad generoso respecto al borde inferior, para
@@ -429,15 +462,20 @@ export default function ShareCard({ trips, theme, dark = true, unit = "km" }) {
             style={{ display: "block", marginTop: 4, background: ui.ink, border: `1px solid ${ui.inkLine}`, color: ui.paper, borderRadius: 10, padding: 8, fontSize: 12 }} />
         </div>
         <div style={{ alignSelf: "flex-end" }}>
-          <button onClick={generate} disabled={generating || filtered.length === 0}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: ui.brass, color: ui.ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: generating || filtered.length === 0 ? 0.6 : 1 }}>
+          <button onClick={() => generate("dates")} disabled={generating || (!start && !end) || filtered.length === 0}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: ui.brass, color: ui.ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: generating || (!start && !end) || filtered.length === 0 ? 0.5 : 1 }}>
             <ImageIcon size={15} /> {generating ? t("generating") : t("generateCard")}
           </button>
         </div>
       </div>
-      {(!start && !end) && (
-        <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>{t("emptyDatesHint")}</div>
-      )}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+        {[["ytd", "cardYear"], ["all", "cardAll"]].map(([kind, key]) => (
+          <button key={kind} onClick={() => generate(kind)} disabled={generating || trips.length === 0}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "none", color: ui.brass, border: `1px solid ${ui.brass}`, borderRadius: 10, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: generating || trips.length === 0 ? 0.5 : 1 }}>
+            <ImageIcon size={15} /> {bt(locale, key)}
+          </button>
+        ))}
+      </div>
       {start && end && filtered.length === 0 && (
         <div style={{ fontSize: 11, color: ui.textDim, marginBottom: 10 }}>{t("noTripsInRange")}</div>
       )}

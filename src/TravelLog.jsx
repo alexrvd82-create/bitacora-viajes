@@ -520,17 +520,16 @@ export default function TravelLog({ session }) {
             style={{ width: "100%", background: ink, border: `1px solid ${inkLine}`, color: paper, borderRadius: 10, padding: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", marginBottom: 16 }} />
 
           {atFreeLimit && !editingId && (
-            <div style={{ background: "rgba(197,138,48,0.12)", border: `1px solid ${brass}`, borderRadius: 10, padding: 12, marginBottom: 12, fontSize: 13 }}>
-              {t("freeLimitReached").replace("{n}", FREE_TRIP_LIMIT)}
+            <div style={{ background: "rgba(197,138,48,0.12)", border: `1px solid ${brass}`, borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 14, lineHeight: 1.45 }}>
+              {bt(locale, "proLimit").replace("{n}", FREE_TRIP_LIMIT)}
+              <button type="button" onClick={() => window.open(KOFI_PRO_LINK, "_blank", "noopener,noreferrer")}
+                style={{ display: "block", width: "100%", marginTop: 12, padding: "12px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                {bt(locale, "proCta")}
+              </button>
             </div>
           )}
           <div style={{ display: "flex", gap: 10 }}>
-            {atFreeLimit && !editingId ? (
-              <a href={KOFI_PRO_LINK} target="_blank" rel="noopener noreferrer"
-                style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block" }}>
-                {t("upgradeToPro")}
-              </a>
-            ) : (
+            {atFreeLimit && !editingId ? null : (
               <button onClick={addTrip} disabled={saving} style={{ padding: "11px 20px", background: brass, color: ink, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
                 {saving ? t("calculatingDistance") : editingId ? t("saveChanges") : t("registerTrip")}
               </button>
