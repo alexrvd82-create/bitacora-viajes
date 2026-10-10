@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Maps — Your life in kilometers, logged and mapped</title>
+  <meta name="description" content="Log every trip, see how much of the world you've covered, unlock achievement badges, and generate a shareable travel summary card. Free, 12 languages." />
+  <link rel="canonical" href="https://www.travel-mapping.app/" />
+  <link rel="icon" type="image/png" href="/logo-v4.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#0a0f1e">
+  <meta name="google" content="notranslate" />
+  <meta name="author" content="ARVD">
+  <meta name="copyright" content="© 2026 ARVD. All rights reserved.">
+  <style>
+    .boot-splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0a0f1e; }
+    .boot-splash img { width: min(70vw, 300px); height: auto; }
+    .boot-splash span { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); font: 500 12px 'IBM Plex Mono', monospace, sans-serif; letter-spacing: 0.08em; color: #94a3c4; opacity: 0.7; }
+  </style>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Travel Mapping">
+
+  <!-- Open Graph / Facebook, LinkedIn, WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.travel-mapping.app/" />
+  <meta property="og:site_name" content="Travel Maps" />
+  <meta property="og:title" content="Travel Maps — Your life in kilometers, logged and mapped" />
+  <meta property="og:description" content="Log every trip, see how much of the world you've covered, unlock achievement badges, and generate a shareable travel summary card." />
+  <meta property="og:image" content="https://www.travel-mapping.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Travel Maps — Your life in kilometers, logged and mapped" />
+  <meta name="twitter:description" content="Log every trip, see how much of the world you've covered, unlock achievement badges, and generate a shareable travel summary card." />
+  <meta name="twitter:image" content="https://www.travel-mapping.app/og-image.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="root">
+    <div class="boot-splash">
+      <img src="/logo-v4.png" alt="Travel Mapping" />
+      <span>© 2026 ARVD</span>
+    </div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
