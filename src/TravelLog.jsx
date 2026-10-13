@@ -32,6 +32,27 @@ const THEMES = {
 
 const emptyStops = () => [{ country: "España", city: "" }, { country: "Francia", city: "" }];
 
+/* Vistas del mapa: rango de longitud/latitud y proporción del recuadro (así no sobra espacio vacío) */
+const MAP_VIEWS = {
+  world: { lon: [-180, 180], lat: [-58, 85], aspect: 2.0 },
+  EU: { lon: [-25, 45], lat: [34, 72], aspect: 1.5 },
+  AS: { lon: [30, 150], lat: [-10, 70], aspect: 1.5 },
+  AF: { lon: [-20, 55], lat: [-37, 38], aspect: 1.2 },
+  NA: { lon: [-170, -50], lat: [5, 75], aspect: 1.5 },
+  SA: { lon: [-85, -30], lat: [-57, 14], aspect: 1.0 },
+  OC: { lon: [110, 180], lat: [-48, 0], aspect: 1.5 },
+};
+function mineView(points) {
+  if (!points.length) return MAP_VIEWS.world;
+  const lons = points.map(p => p.lon), lats = points.map(p => p.lat);
+  const pad = 8;
+  const lon = [Math.max(-180, Math.min(...lons) - pad), Math.min(180, Math.max(...lons) + pad)];
+  const lat = [Math.max(-85, Math.min(...lats) - pad), Math.min(85, Math.max(...lats) + pad)];
+  if (lon[1] - lon[0] < 30) { const c = (lon[0] + lon[1]) / 2; lon[0] = c - 15; lon[1] = c + 15; }
+  if (lat[1] - lat[0] < 20) { const c = (lat[0] + lat[1]) / 2; lat[0] = c - 10; lat[1] = c + 10; }
+  const aspect = Math.min(2, Math.max(1.1, ((lon[1] - lon[0]) / (lat[1] - lat[0])) * 0.85));
+  return { lon, lat, aspect };
+}
 const CONTINENT_KEY = { EU: "europe", AS: "asia", AF: "africa", NA: "northAmerica", SA: "southAmerica", OC: "oceania" };
 
 // g CO2 per passenger-km, approximate averages (informational estimate, not a precise calculator)
@@ -81,6 +102,7 @@ export default function TravelLog({ session }) {
   ];
   const [dark, setDark] = useState(() => localStorage.getItem("bitacora-theme") !== "light");
   const [proChecked, setProChecked] = useState(false);
+  const [mapView, setMapView] = useState("world");
   const [toast, setToast] = useState(null);
   useEffect(() => {
     if (!toast) return;
@@ -361,6 +383,7 @@ export default function TravelLog({ session }) {
     });
     return [...seen.values()];
   }, [trips]);
+  const mapViewDef = mapView === "mine" ? mineView(cityPoints) : (MAP_VIEWS[mapView] || MAP_VIEWS.world);
 
   const gaugeStyle = { background: `conic-gradient(${brass} ${Math.min(stats.pctWorld, 100) * 3.6}deg, ${inkLine} 0deg)` };
 
@@ -690,7 +713,8 @@ export default function TravelLog({ session }) {
                 {t("mapLoadError")}
               </div>
             }>
-              <Suspense fallback={<div style={{ height: 420, display: "flex", alignItems: "center", justifyContent: "center", color: textDim, fontSize: 12 }}>…</div>}>
+              <Suspense fallback={<div style={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center", color: textDim, fontSize: 12 }}>…</div>}>
+                <div style={{ width: "100%", aspectRatio: String(mapViewDef.aspect) }}>
                 <Plot
                   data={[{
                     type: "choropleth", locationmode: "ISO-3",
@@ -707,16 +731,28 @@ export default function TravelLog({ session }) {
                     marker: { symbol: "circle", size: isMobile ? 4 : 7, color: "#e5484d", line: { color: ink, width: isMobile ? 0.5 : 1 } },
                   }]}
                   layout={{
-                    geo: { projection: { type: "natural earth" }, showframe: false, showcoastlines: false, showocean: true, oceancolor: ink, landcolor: inkLine, bgcolor: "transparent" },
+                    geo: { projection: { type: "natural earth" }, lonaxis: { range: mapViewDef.lon }, lataxis: { range: mapViewDef.lat }, showframe: false, showcoastlines: false, showocean: true, oceancolor: ink, landcolor: inkLine, bgcolor: "transparent" },
                     paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-                    margin: { t: 10, b: 10, l: 0, r: 0 }, height: 420,
+                    margin: { t: 0, b: 0, l: 0, r: 0 },
+                    // Con el mundo entero no se arrastra (así no se mueve sin querer al hacer scroll); al ampliar sí
+                    dragmode: mapView === "world" ? false : "pan",
+                    uirevision: `${mapView}-${cityPoints.length}`,
                     font: { color: paper, family: "IBM Plex Mono, monospace", size: 10 },
                   }}
-                  config={{ scrollZoom: true, displayModeBar: true, displaylogo: false, responsive: true }}
+                  config={{ scrollZoom: !isMobile, displayModeBar: !isMobile, displaylogo: false, responsive: true }}
                   useResizeHandler
-                  style={{ width: "100%", height: "420px" }}
+                  style={{ width: "100%", height: "100%" }}
                 />
+                </div>
               </Suspense>
+              <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "10px 2px 2px" }}>
+                {[["world", t("world")], ...CONTINENTS.map(c => [c.code, t(CONTINENT_KEY[c.code] || c.label)]), ["mine", bt(locale, "myTripsView")]].map(([key, label]) => (
+                  <button key={key} onClick={() => setMapView(key)}
+                    style={{ flex: "0 0 auto", padding: "6px 12px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", border: `1px solid ${mapView === key ? brass : inkLine}`, background: mapView === key ? brass : "transparent", color: mapView === key ? ink : paper }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </MapErrorBoundary>
           </div>
         </div>

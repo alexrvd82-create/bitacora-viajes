@@ -2,6 +2,7 @@
    Uso: bt(locale, "clave"). Si falta el idioma o la clave, cae a inglés. */
 const D = {
   en: {
+    myTripsView: "My trips",
     proActivate: "Activate Pro version", proActive: "Pro active",
     cardYear: "This year", cardAll: "All time",
     capitalsCard: "CAPITALS", continentsCard: "CONTINENTS",
@@ -17,6 +18,7 @@ const D = {
     hemis: "Both hemispheres", hemisDesc: "Cities in the north and the south",
   },
   es: {
+    myTripsView: "Mis viajes",
     proActivate: "Activar versión Pro", proActive: "Pro activo",
     cardYear: "Este año", cardAll: "Toda la vida",
     capitalsCard: "CAPITALES", continentsCard: "CONTINENTES",
@@ -32,6 +34,7 @@ const D = {
     hemis: "Ambos hemisferios", hemisDesc: "Ciudades en el norte y en el sur",
   },
   fr: {
+    myTripsView: "Mes voyages",
     proActivate: "Activer la version Pro", proActive: "Pro actif",
     cardYear: "Cette année", cardAll: "Toute la vie",
     capitalsCard: "CAPITALES", continentsCard: "CONTINENTS",
@@ -47,6 +50,7 @@ const D = {
     hemis: "Deux hémisphères", hemisDesc: "Des villes au nord et au sud",
   },
   de: {
+    myTripsView: "Meine Reisen",
     proActivate: "Pro-Version aktivieren", proActive: "Pro aktiv",
     cardYear: "Dieses Jahr", cardAll: "Gesamt",
     capitalsCard: "HAUPTSTÄDTE", continentsCard: "KONTINENTE",
@@ -62,6 +66,7 @@ const D = {
     hemis: "Beide Hemisphären", hemisDesc: "Städte im Norden und im Süden",
   },
   pt: {
+    myTripsView: "Minhas viagens",
     proActivate: "Ativar versão Pro", proActive: "Pro ativo",
     cardYear: "Este ano", cardAll: "Toda a vida",
     capitalsCard: "CAPITAIS", continentsCard: "CONTINENTES",
@@ -77,6 +82,7 @@ const D = {
     hemis: "Ambos os hemisférios", hemisDesc: "Cidades no norte e no sul",
   },
   it: {
+    myTripsView: "I miei viaggi",
     proActivate: "Attiva la versione Pro", proActive: "Pro attivo",
     cardYear: "Quest'anno", cardAll: "Di sempre",
     capitalsCard: "CAPITALI", continentsCard: "CONTINENTI",
@@ -92,6 +98,7 @@ const D = {
     hemis: "Entrambi gli emisferi", hemisDesc: "Città a nord e a sud",
   },
   zh: {
+    myTripsView: "我的旅行",
     proActivate: "激活 Pro 版", proActive: "已开通 Pro",
     cardYear: "今年", cardAll: "全部时间",
     capitalsCard: "首都", continentsCard: "大洲",
@@ -107,6 +114,7 @@ const D = {
     hemis: "南北半球", hemisDesc: "北半球和南半球都去过城市",
   },
   ja: {
+    myTripsView: "旅の記録",
     proActivate: "Pro版を有効にする", proActive: "Pro有効",
     cardYear: "今年", cardAll: "これまで全部",
     capitalsCard: "首都", continentsCard: "大陸",
@@ -122,6 +130,7 @@ const D = {
     hemis: "南北両半球", hemisDesc: "北半球と南半球の都市",
   },
   hi: {
+    myTripsView: "मेरी यात्राएँ",
     proActivate: "Pro संस्करण सक्रिय करें", proActive: "Pro सक्रिय",
     cardYear: "इस साल", cardAll: "अब तक सब",
     capitalsCard: "राजधानियाँ", continentsCard: "महाद्वीप",
@@ -137,6 +146,7 @@ const D = {
     hemis: "दोनों गोलार्द्ध", hemisDesc: "उत्तर और दक्षिण के शहर",
   },
   ar: {
+    myTripsView: "رحلاتي",
     proActivate: "تفعيل نسخة Pro", proActive: "Pro مفعّل",
     cardYear: "هذا العام", cardAll: "كل الوقت",
     capitalsCard: "العواصم", continentsCard: "القارات",
@@ -152,6 +162,7 @@ const D = {
     hemis: "نصفا الكرة", hemisDesc: "مدن في الشمال والجنوب",
   },
   ru: {
+    myTripsView: "Мои поездки",
     proActivate: "Активировать Pro", proActive: "Pro активен",
     cardYear: "Этот год", cardAll: "За всё время",
     capitalsCard: "СТОЛИЦЫ", continentsCard: "КОНТИНЕНТЫ",
@@ -167,6 +178,7 @@ const D = {
     hemis: "Оба полушария", hemisDesc: "Города на севере и на юге",
   },
   ko: {
+    myTripsView: "내 여행",
     proActivate: "Pro 버전 활성화", proActive: "Pro 활성",
     cardYear: "올해", cardAll: "전체 기간",
     capitalsCard: "수도", continentsCard: "대륙",
