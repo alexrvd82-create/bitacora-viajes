@@ -745,10 +745,10 @@ export default function TravelLog({ session }) {
                 />
                 </div>
               </Suspense>
-              <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "10px 2px 2px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 6, padding: "12px 0 0" }}>
                 {[["world", t("world")], ...CONTINENTS.map(c => [c.code, t(CONTINENT_KEY[c.code] || c.label)]), ["mine", bt(locale, "myTripsView")]].map(([key, label]) => (
                   <button key={key} onClick={() => setMapView(key)}
-                    style={{ flex: "0 0 auto", padding: "6px 12px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", border: `1px solid ${mapView === key ? brass : inkLine}`, background: mapView === key ? brass : "transparent", color: mapView === key ? ink : paper }}>
+                    style={{ flex: "0 0 auto", padding: "6px 11px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", border: `1px solid ${mapView === key ? brass : inkLine}`, background: mapView === key ? brass : "transparent", color: mapView === key ? ink : paper }}>
                     {label}
                   </button>
                 ))}
