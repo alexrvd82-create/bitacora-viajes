@@ -2,6 +2,7 @@
    Uso: bt(locale, "clave"). Si falta el idioma o la clave, cae a inglés. */
 const D = {
   en: {
+    proActivate: "Activate Pro version", proActive: "Pro active",
     cardYear: "This year", cardAll: "All time",
     capitalsCard: "CAPITALS", continentsCard: "CONTINENTS",
     proLimit: "You've reached the limit of {n} free trips. Go Pro for $1.99, for life.", proCta: "Go Pro",
@@ -16,6 +17,7 @@ const D = {
     hemis: "Both hemispheres", hemisDesc: "Cities in the north and the south",
   },
   es: {
+    proActivate: "Activar versión Pro", proActive: "Pro activo",
     cardYear: "Este año", cardAll: "Toda la vida",
     capitalsCard: "CAPITALES", continentsCard: "CONTINENTES",
     proLimit: "Has alcanzado el límite de {n} registros gratuitos. Hazte Pro por 1,99 $ de por vida.", proCta: "Hazte Pro",
@@ -30,6 +32,7 @@ const D = {
     hemis: "Ambos hemisferios", hemisDesc: "Ciudades en el norte y en el sur",
   },
   fr: {
+    proActivate: "Activer la version Pro", proActive: "Pro actif",
     cardYear: "Cette année", cardAll: "Toute la vie",
     capitalsCard: "CAPITALES", continentsCard: "CONTINENTS",
     proLimit: "Vous avez atteint la limite de {n} voyages gratuits. Passez Pro pour 1,99 $, à vie.", proCta: "Passer Pro",
@@ -44,6 +47,7 @@ const D = {
     hemis: "Deux hémisphères", hemisDesc: "Des villes au nord et au sud",
   },
   de: {
+    proActivate: "Pro-Version aktivieren", proActive: "Pro aktiv",
     cardYear: "Dieses Jahr", cardAll: "Gesamt",
     capitalsCard: "HAUPTSTÄDTE", continentsCard: "KONTINENTE",
     proLimit: "Du hast das Limit von {n} kostenlosen Einträgen erreicht. Werde Pro für 1,99 $ – für immer.", proCta: "Pro werden",
@@ -58,6 +62,7 @@ const D = {
     hemis: "Beide Hemisphären", hemisDesc: "Städte im Norden und im Süden",
   },
   pt: {
+    proActivate: "Ativar versão Pro", proActive: "Pro ativo",
     cardYear: "Este ano", cardAll: "Toda a vida",
     capitalsCard: "CAPITAIS", continentsCard: "CONTINENTES",
     proLimit: "Você atingiu o limite de {n} registros gratuitos. Torne-se Pro por 1,99 $ para sempre.", proCta: "Torne-se Pro",
@@ -72,6 +77,7 @@ const D = {
     hemis: "Ambos os hemisférios", hemisDesc: "Cidades no norte e no sul",
   },
   it: {
+    proActivate: "Attiva la versione Pro", proActive: "Pro attivo",
     cardYear: "Quest'anno", cardAll: "Di sempre",
     capitalsCard: "CAPITALI", continentsCard: "CONTINENTI",
     proLimit: "Hai raggiunto il limite di {n} registri gratuiti. Passa a Pro per 1,99 $, per sempre.", proCta: "Passa a Pro",
@@ -86,6 +92,7 @@ const D = {
     hemis: "Entrambi gli emisferi", hemisDesc: "Città a nord e a sud",
   },
   zh: {
+    proActivate: "激活 Pro 版", proActive: "已开通 Pro",
     cardYear: "今年", cardAll: "全部时间",
     capitalsCard: "首都", continentsCard: "大洲",
     proLimit: "你已达到 {n} 条免费记录的上限。仅需 1.99 美元，终身升级 Pro。", proCta: "升级 Pro",
@@ -100,6 +107,7 @@ const D = {
     hemis: "南北半球", hemisDesc: "北半球和南半球都去过城市",
   },
   ja: {
+    proActivate: "Pro版を有効にする", proActive: "Pro有効",
     cardYear: "今年", cardAll: "これまで全部",
     capitalsCard: "首都", continentsCard: "大陸",
     proLimit: "無料の記録の上限（{n}件）に達しました。1.99ドルで一生Proに。", proCta: "Proにする",
@@ -114,6 +122,7 @@ const D = {
     hemis: "南北両半球", hemisDesc: "北半球と南半球の都市",
   },
   hi: {
+    proActivate: "Pro संस्करण सक्रिय करें", proActive: "Pro सक्रिय",
     cardYear: "इस साल", cardAll: "अब तक सब",
     capitalsCard: "राजधानियाँ", continentsCard: "महाद्वीप",
     proLimit: "आप {n} मुफ़्त रिकॉर्ड की सीमा तक पहुँच गए हैं। सिर्फ़ $1.99 में आजीवन Pro बनें।", proCta: "Pro बनें",
@@ -128,6 +137,7 @@ const D = {
     hemis: "दोनों गोलार्द्ध", hemisDesc: "उत्तर और दक्षिण के शहर",
   },
   ar: {
+    proActivate: "تفعيل نسخة Pro", proActive: "Pro مفعّل",
     cardYear: "هذا العام", cardAll: "كل الوقت",
     capitalsCard: "العواصم", continentsCard: "القارات",
     proLimit: "لقد وصلت إلى حد {n} سجلات مجانية. احصل على Pro مدى الحياة مقابل 1.99 دولار.", proCta: "احصل على Pro",
@@ -142,6 +152,7 @@ const D = {
     hemis: "نصفا الكرة", hemisDesc: "مدن في الشمال والجنوب",
   },
   ru: {
+    proActivate: "Активировать Pro", proActive: "Pro активен",
     cardYear: "Этот год", cardAll: "За всё время",
     capitalsCard: "СТОЛИЦЫ", continentsCard: "КОНТИНЕНТЫ",
     proLimit: "Вы достигли лимита в {n} бесплатных записей. Станьте Pro за 1,99 $ — навсегда.", proCta: "Стать Pro",
@@ -156,6 +167,7 @@ const D = {
     hemis: "Оба полушария", hemisDesc: "Города на севере и на юге",
   },
   ko: {
+    proActivate: "Pro 버전 활성화", proActive: "Pro 활성",
     cardYear: "올해", cardAll: "전체 기간",
     capitalsCard: "수도", continentsCard: "대륙",
     proLimit: "무료 기록 {n}개 한도에 도달했습니다. 1.99달러로 평생 Pro가 되세요.", proCta: "Pro 시작하기",
